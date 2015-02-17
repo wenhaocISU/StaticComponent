@@ -74,8 +74,9 @@ public class StaticAppBuilder {
 	/**
 	 * StaticApp building steps:
 	 * 1. use apktool to extract source(smali) and resources(xml)
-	 * 2. parse each smali files, create StaticClass objects
-	 * 3. parse xmls, including AndroidManifest, layouts, etc.
+	 * 2. parse each smali files, create StaticClass objects with multithreading
+	 * 3. sort call graph, complete inner/outer class relations
+	 * 4. parse xmls, including AndroidManifest, layouts, etc.
 	 * */
 	private static List<StaticClassBuilder> classBuilders = new ArrayList<StaticClassBuilder>();
 	private static void buildStaticApp(StaticApp staticApp)
@@ -103,6 +104,23 @@ public class StaticAppBuilder {
 		}
 		executor.shutdown();
 		// Step 3
+		for (StaticClass c : staticApp.getClasses())
+		{
+			/** 
+			 Inner classes already know their outer class, but
+			 outer classes might now know all of their inner classes.
+			 Because those inner classes that were declared within
+			 a method body, will not appear in the 'MemberClasses'
+			 annotation. 
+			**/
+			if (c.isInnerClass())
+			{
+				StaticClass outerC = staticApp.findClassByJavaName(c.getOuterClass());
+				outerC.addInnerClass(c.getJavaName());
+			}
+			//TODO: call graph
+		}
+		// Step 4
 		parseManifest(staticApp);
 	}
 
@@ -177,13 +195,13 @@ public class StaticAppBuilder {
 				StaticClass c = staticApp.findClassByJavaName(aName);
 				if (c == null)
 					continue;
-				c.setActivity(true);
+				c.setIsActivity(true);
 				Element e = (Element) a;
 				NodeList actions = e.getElementsByTagName("action");
 				for (int j = 0, len2 = actions.getLength(); j < len2; j++) {
 					Node action = actions.item(j);
 					if (action.getAttributes().getNamedItem("android:name").getNodeValue().equals("android.intent.action.MAIN")) {
-						c.setMainActivity(true);
+						c.setIsMainActivity(true);
 						mainActFound = true;
 						break;
 					}
@@ -206,7 +224,7 @@ public class StaticAppBuilder {
 						Node action = actions.item(j);
 						if (action.getAttributes().getNamedItem("android:name").getNodeValue().equals("android.intent.action.MAIN")) {
 							StaticClass c = staticApp.findClassByJavaName(aName);
-							c.setMainActivity(true);
+							c.setIsMainActivity(true);
 							mainActFound = true;
 							break;
 						}

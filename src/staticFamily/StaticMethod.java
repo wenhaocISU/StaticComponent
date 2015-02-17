@@ -36,6 +36,14 @@ public class StaticMethod implements Serializable {
 		this.declaration = declaration;
 	}
 
+	public String getDeclaringClass() {
+		return signature.substring(0, signature.indexOf("->"));
+	}
+	
+	public String getSubSignature() {
+		return signature.substring(signature.indexOf("->")+2, signature.length());
+	}
+	
 	public String getSignature() {
 		return signature;
 	}
@@ -89,7 +97,8 @@ public class StaticMethod implements Serializable {
 	}
 
 	public void addInCallSourceSig(String inCallSourceSig) {
-		this.inCallSourceSigs.add(inCallSourceSig);
+		if (!this.inCallSourceSigs.contains(inCallSourceSig))
+			this.inCallSourceSigs.add(inCallSourceSig);
 	}
 	
 	public void setInCallSourceSigs(List<String> inCallSourceSigs) {
@@ -105,7 +114,8 @@ public class StaticMethod implements Serializable {
 	}
 	
 	public void setOutCallTargetSigs(List<String> outCallTargetSigs) {
-		this.outCallTargetSigs = outCallTargetSigs;
+		if (!this.outCallTargetSigs.contains(outCallTargetSigs))
+			this.outCallTargetSigs = outCallTargetSigs;
 	}
 
 	public List<String> getFieldRefSigs() {
@@ -113,7 +123,8 @@ public class StaticMethod implements Serializable {
 	}
 
 	public void addFieldRefSig(String fieldRefSig) {
-		this.fieldRefSigs.add(fieldRefSig);
+		if (!this.fieldRefSigs.contains(fieldRefSig))
+			this.fieldRefSigs.add(fieldRefSig);
 	}
 	
 	public void setFieldRefSigs(List<String> fieldRefSigs) {

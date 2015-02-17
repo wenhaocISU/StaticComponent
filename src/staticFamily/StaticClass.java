@@ -14,10 +14,13 @@ public class StaticClass implements Serializable {
 	private List<StaticField> fields = new ArrayList<StaticField>();
 	private List<StaticMethod> methods = new ArrayList<StaticMethod>();
 	
+	private String superClass = "";
+	private List<String> interfaces = new ArrayList<String>();
+	
 	private String outerClass = "";
 	private List<String> innerClasses = new ArrayList<String>();
 	
-	private boolean isInnerClass;
+	private boolean isInnerClass, isDefinedInsideMethod;
 	private boolean isActivity, isMainActivity;
 	
 	public String getDeclaration() {
@@ -86,6 +89,11 @@ public class StaticClass implements Serializable {
 		return innerClasses;
 	}
 
+	public void addInnerClass(String innerClass) {
+		if (!this.innerClasses.contains(innerClass))
+			this.innerClasses.add(innerClass);
+	}
+	
 	public void setInnerClasses(List<String> innerClasses) {
 		this.innerClasses = innerClasses;
 	}
@@ -94,7 +102,7 @@ public class StaticClass implements Serializable {
 		return isInnerClass;
 	}
 
-	public void setInnerClass(boolean isInnerClass) {
+	public void setIsInnerClass(boolean isInnerClass) {
 		this.isInnerClass = isInnerClass;
 	}
 
@@ -102,7 +110,7 @@ public class StaticClass implements Serializable {
 		return isActivity;
 	}
 
-	public void setActivity(boolean isActivity) {
+	public void setIsActivity(boolean isActivity) {
 		this.isActivity = isActivity;
 	}
 
@@ -110,7 +118,7 @@ public class StaticClass implements Serializable {
 		return isMainActivity;
 	}
 
-	public void setMainActivity(boolean isMainActivity) {
+	public void setIsMainActivity(boolean isMainActivity) {
 		this.isMainActivity = isMainActivity;
 	}
 	
@@ -136,6 +144,35 @@ public class StaticClass implements Serializable {
 	
 	public boolean isProtected() {
 		return declaration.contains(" protected ");
+	}
+
+	public String getSuperClass() {
+		return superClass;
+	}
+
+	public void setSuperClass(String superClass) {
+		this.superClass = superClass;
+	}
+
+	public List<String> getInterfaces() {
+		return interfaces;
+	}
+
+	public void addInterface(String interfaceName) {
+		if (!this.interfaces.contains(interfaceName))
+			this.interfaces.add(interfaceName);
+	}
+	
+	public void setInterfaces(List<String> interfaces) {
+		this.interfaces = interfaces;
+	}
+
+	public boolean isDefinedInsideMethod() {
+		return isDefinedInsideMethod;
+	}
+
+	public void setIsDefinedInsideMethod(boolean isDefinedInsideMethod) {
+		this.isDefinedInsideMethod = isDefinedInsideMethod;
 	}
 	
 	

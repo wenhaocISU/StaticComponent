@@ -1,13 +1,18 @@
 package staticFamily;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import symbolic.Expression;
 
 public class StaticStmt {
 
 	private String smaliStmt = "";
 	private int sourceLineNumber = -1;
-	
+	private BlockLabel blockLabel;
 	private String vA = "", vB = "", vC = "";
+	private boolean hasCatch, hasFinally;
+	private Map<String, String> ExceptionMap = new HashMap<String, String>();
 	
 	private Expression expression;
 	
@@ -87,5 +92,36 @@ public class StaticStmt {
 		this.endsMethod = endsMethod;
 	}
 
+	public BlockLabel getBlockLabel() {
+		return blockLabel;
+	}
+
+	public void setBlockLabel(BlockLabel label) {
+		this.blockLabel = label;
+	}
+
+	public boolean hasCatch() {
+		return hasCatch;
+	}
+
+	public void setHasCatch(boolean hasCatch) {
+		this.hasCatch = hasCatch;
+	}
+
+	public boolean hasFinally() {
+		return hasFinally;
+	}
+
+	public void setHasFinally(boolean hasFinally) {
+		this.hasFinally = hasFinally;
+	}
+
+	public Map<String, String> getExceptionMap() {
+		return ExceptionMap;
+	}
+
+	public void setExceptionMap(Map<String, String> exceptionMap) {
+		ExceptionMap = exceptionMap;
+	}
 	
 }
