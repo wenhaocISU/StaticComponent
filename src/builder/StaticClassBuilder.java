@@ -181,7 +181,7 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 		if (line.startsWith(".line"))
 		{
 			/**  
-			  I ran into a weird app that gave same line number to two
+			   ran into a weird app that gave same line number to two
 			   different statements. Therefore, if we meet a line number 
 			   that has already been used, we remove this line number 
 			   and will assign a new line number for the statement later.
@@ -206,28 +206,40 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 				if (!s.getBlockLabel().getTryLabels().contains(range))
 					continue;
 				s.setHasCatch(true);
-				
+				//TODO
 			}
 		}
 		else if (line.startsWith(".catchall "))
 		{
-			
+			//TODO
 		}
 		else if (line.startsWith(".locals "))
 		{
-			
+			int localsCount = Integer.parseInt(line.split(" ")[1]);
+			m.setLocalVariableCount(localsCount);
 		}
 		else if (line.startsWith(".annotation"))
 		{
-			
+			while (!line.equals(".end annotation") && index < smaliCode.size())
+			{
+				line = smaliCode.get(index++);
+				if (line.contains(" "))
+					line = line.trim();
+			}
 		}
 		else if (line.startsWith(".local "))
 		{
-			
+			String localVariableName = line.substring(line.indexOf(" ")+1, line.indexOf(", "));
+			String debugInfo = line.substring(line.indexOf(", "));
+			String debugVariableName = debugInfo.split(":")[0];
+			m.setVariableDebugInfo(localVariableName, debugVariableName);
 		}
 		else if (line.startsWith(".param"))
 		{
-			
+			String paramLocalName = line.substring(line.indexOf(" ")+1, line.indexOf(", "));
+			String paramDebugName = line.substring(line.indexOf(", \""));
+			paramDebugName = paramDebugName.substring(0, paramDebugName.indexOf("\""));
+			m.setVariableDebugInfo(paramLocalName, paramDebugName);
 		}
 	}
 	

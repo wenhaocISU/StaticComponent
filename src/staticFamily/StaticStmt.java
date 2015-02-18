@@ -14,11 +14,46 @@ public class StaticStmt {
 	private boolean hasCatch, hasFinally;
 	private Map<String, String> ExceptionMap = new HashMap<String, String>();
 	
-	private Expression expression;
+	/**
+	 data is used differently by different statement types:
+	 Switch: case switch map: Map<Integer, String>. (<value, jumpLabel>)
+	 Invoke: method signature
+	 **/
+	private Object data;
 	
-	private boolean updatesSymbolicStates;
-	private boolean updatesPathConditions;
-	private boolean endsMethod;
+	private Expression expression = null;
+	
+	/**
+	 Only 1 of the following 5 boolean values can be true
+	 	boolean endsMethod()
+	 	boolean unconditionallyJumps()
+	 	boolean conditionallyJumps()
+	 	boolean updatesSymbolicStates();
+	 	boolean invokesMethod()
+	 **/
+	public boolean endsMethod()
+	{
+		return (smaliStmt.startsWith("return") || 
+				smaliStmt.startsWith("throw"));
+	}
+	public boolean unconditionallyJumps()
+	{
+		return (smaliStmt.startsWith("goto"));
+	}
+	public boolean conditionallyJumps()
+	{
+		return (smaliStmt.startsWith("if") || 
+				smaliStmt.startsWith("packed-switch") ||
+				smaliStmt.startsWith("sparse-switch"));
+	}
+	public boolean updatesSymbolicStates()
+	{
+		return (expression != null);
+	}
+	public boolean invokesMethod()
+	{
+		return (smaliStmt.startsWith("invoke-"));
+	}
 	
 	public String getSmaliStmt() {
 		return smaliStmt;
@@ -26,6 +61,7 @@ public class StaticStmt {
 	
 	public void setSmaliStmt(String smaliStmt) {
 		this.smaliStmt = smaliStmt;
+		
 	}
 
 	public int getSourceLineNumber() {
@@ -68,30 +104,6 @@ public class StaticStmt {
 		this.expression = expression;
 	}
 
-	public boolean updatesSymbolicStates() {
-		return updatesSymbolicStates;
-	}
-
-	public void setUpdatesSymbolicStates(boolean updatesSymbolicStates) {
-		this.updatesSymbolicStates = updatesSymbolicStates;
-	}
-
-	public boolean updatesPathConditions() {
-		return updatesPathConditions;
-	}
-
-	public void setUpdatesPathConditions(boolean updatesPathConditions) {
-		this.updatesPathConditions = updatesPathConditions;
-	}
-
-	public boolean endsMethod() {
-		return endsMethod;
-	}
-
-	public void setEndsMethod(boolean endsMethod) {
-		this.endsMethod = endsMethod;
-	}
-
 	public BlockLabel getBlockLabel() {
 		return blockLabel;
 	}
@@ -122,6 +134,11 @@ public class StaticStmt {
 
 	public void setExceptionMap(Map<String, String> exceptionMap) {
 		ExceptionMap = exceptionMap;
+	}
+	
+	public void putData(Object data)
+	{
+		this.data = data;
 	}
 	
 }

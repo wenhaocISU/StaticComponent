@@ -13,7 +13,7 @@ public class StaticMethod implements Serializable {
 	private String declaration;
 	private String signature;
 	
-	private byte localVariableCount = 0;
+	private int localVariableCount = 0;
 	
 	private ArrayList<StaticStmt> smaliStmts = new ArrayList<StaticStmt>();
 	private ArrayList<String> paramTypes = new ArrayList<String>();
@@ -52,11 +52,11 @@ public class StaticMethod implements Serializable {
 		this.signature = signature;
 	}
 
-	public byte getLocalVariableCount() {
+	public int getLocalVariableCount() {
 		return localVariableCount;
 	}
 
-	public void setLocalVariableCount(byte localVariableCount) {
+	public void setLocalVariableCount(int localVariableCount) {
 		this.localVariableCount = localVariableCount;
 	}
 
@@ -135,8 +135,8 @@ public class StaticMethod implements Serializable {
 		return variableDebugInfo;
 	}
 
-	public void setVariableDebugInfo(Map<String, String> variableDebugInfo) {
-		this.variableDebugInfo = variableDebugInfo;
+	public void setVariableDebugInfo(String localName, String debugName) {
+		this.variableDebugInfo.put(localName, debugName);
 	}
 
 }
