@@ -27,6 +27,7 @@ import tools.Jarsigner;
 
 public class StaticAppBuilder {
 
+	public static boolean instrumentApps = true;
 	
 	public static StaticApp buildOrReadStaticApp(String apkPath, boolean forceBuild)
 	{
@@ -50,18 +51,21 @@ public class StaticAppBuilder {
 				Utility.saveObject(staticApp, staticAppObjectPath);
 			}
 			// build instrumented apk
-			File instrumentedApp = new File(staticApp.getInstrumentedApkPath());
-			if (!instrumentedApp.exists())
+			if (instrumentApps)
 			{
-				File unsignedApp = new File(staticApp.getUnsignedApkPath());
-				if (!unsignedApp.exists())
+				File instrumentedApp = new File(staticApp.getInstrumentedApkPath());
+				if (!instrumentedApp.exists())
 				{
-					String sourceDir = staticApp.getDataFolder() + "/apktool";
-					String outPath = staticApp.getUnsignedApkPath();
-					Apktool.buildAPK(sourceDir, outPath);
+					File unsignedApp = new File(staticApp.getUnsignedApkPath());
+					if (!unsignedApp.exists())
+					{
+						String sourceDir = staticApp.getDataFolder() + "/apktool";
+						String outPath = staticApp.getUnsignedApkPath();
+						Apktool.buildAPK(sourceDir, outPath);
+					}
+					Jarsigner.signAPK(staticApp.getUnsignedApkPath(),
+							staticApp.getInstrumentedApkPath());
 				}
-				Jarsigner.signAPK(staticApp.getUnsignedApkPath(),
-						staticApp.getInstrumentedApkPath());
 			}
 		}
 		catch (Exception e)

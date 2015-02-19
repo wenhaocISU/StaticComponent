@@ -13,7 +13,7 @@ public class StaticStmt {
 	private String vA = "", vB = "", vC = "";
 	private boolean hasCatch, hasFinally;
 	private Map<String, String> ExceptionMap = new HashMap<String, String>();
-	
+	private boolean isSwitchStmt;
 	/**
 	 data is used differently by different statement types:
 	 Switch: case switch map: Map<Integer, String>. (<value, jumpLabel>)
@@ -139,6 +139,12 @@ public class StaticStmt {
 	public void putData(Object data)
 	{
 		this.data = data;
+	}
+	public boolean isSwitchStmt() {
+		return isSwitchStmt;
+	}
+	public void setIsSwitchStmt(boolean isSwitchStmt) {
+		this.isSwitchStmt = isSwitchStmt;
 	}
 	
 }

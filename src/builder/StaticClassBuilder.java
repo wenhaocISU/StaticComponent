@@ -163,7 +163,34 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 					}
 					else
 					{
-						
+						StaticStmt s = buildStaticStmt(m, line, methodContext);
+						m.addSmaliStmt(s);
+						/** If current statement doesn't have a line number, we give
+						it one. **/
+						if (methodContext.currentLineNumber == -1)
+						{
+							String toAdd = "    .line " + this.maxOriginalLineNumber++;
+							int insertionLocation = index-1;
+							String tempLine = smaliCode.get(insertionLocation);
+							while (!tempLine.equals("") && !tempLine.equals("    .prologue"))
+								tempLine = smaliCode.get(--insertionLocation);
+							smaliCode.add(insertionLocation+1, toAdd);
+						}
+						/** For concolic execution, we need to let jdb recognize
+						 the switch variable. **/
+						if (s.isSwitchStmt())
+						{
+							String variableName = s.getvA();
+							if (!m.getVariableDebugInfo().containsKey(variableName))
+							{
+								String debugName = "wenhao" + variableName;
+								m.setVariableDebugInfo(variableName, debugName);
+								String toAdd = "    .local " + variableName + 
+										", \"" + debugName + "\":I";
+								int insertionLocation = index - 1;
+								smaliCode.add(insertionLocation, toAdd);
+							}
+						}
 					}
 				}
 			}
@@ -230,14 +257,14 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 		else if (line.startsWith(".local "))
 		{
 			String localVariableName = line.substring(line.indexOf(" ")+1, line.indexOf(", "));
-			String debugInfo = line.substring(line.indexOf(", "));
+			String debugInfo = line.substring(line.indexOf(", ")+2);
 			String debugVariableName = debugInfo.split(":")[0];
 			m.setVariableDebugInfo(localVariableName, debugVariableName);
 		}
-		else if (line.startsWith(".param"))
+		else if (line.startsWith(".param") && line.contains("\""))
 		{
 			String paramLocalName = line.substring(line.indexOf(" ")+1, line.indexOf(", "));
-			String paramDebugName = line.substring(line.indexOf(", \""));
+			String paramDebugName = line.substring(line.indexOf(", \"")+3);
 			paramDebugName = paramDebugName.substring(0, paramDebugName.indexOf("\""));
 			m.setVariableDebugInfo(paramLocalName, paramDebugName);
 		}
@@ -245,7 +272,56 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 	
 	private void parseColons(StaticMethod m, String line, MethodContext methodContext)
 	{
-		
+		if (line.startsWith(":array_"))
+		{
+			
+		}
+		else if (line.startsWith("::switch_data_"))
+		{
+			
+		}
+		else if (line.startsWith("::pswitch_data_"))
+		{
+			
+		}
+		else if (line.startsWith(":try_start_"))
+		{
+			methodContext.label.addTryLabel(line);
+		}
+		else if (line.startsWith(":try_end_"))
+		{
+			methodContext.label.getTryLabels().remove(
+					line.replace("_end_", "_start_"));
+		}
+		else
+		{	// Here is the regular labels
+			if (methodContext.normalLabelAlreadyUsed)
+			{
+				ArrayList<String> newNormalLabel = new ArrayList<String>();
+				newNormalLabel.add(line);
+				methodContext.label.setNormalLabels(newNormalLabel);
+				methodContext.label.setNormalLabelSection(0);
+				methodContext.normalLabelAlreadyUsed = false;
+			}
+			else
+			{
+				methodContext.label.addNormalLabel(line);
+			}
+		}
+	}
+	
+	private StaticStmt buildStaticStmt(StaticMethod m, String line, MethodContext methodContext)
+	{
+		// smali stmt
+		// statement id
+		// block label
+		// line number
+		StaticStmt s = new StaticStmt();
+		s.setSmaliStmt(line);
+		s.setBlockLabel(methodContext.label.clone());
+		methodContext.normalLabelAlreadyUsed = true;
+		ExpressionBuilder.buildExpression(s);
+		return s;
 	}
 	
 	public void setMaxOriginalLineNumber(int maxOriginalLineNumber) {
@@ -264,7 +340,9 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 	private class MethodContext {
 		BlockLabel label;
 		boolean normalLabelAlreadyUsed;
+		boolean needToAddLineNumber;
 		int currentLineNumber;
+		
 	}
 	
 }
