@@ -93,7 +93,7 @@ public class StaticAppBuilder {
 		File smaliFolder = new File(staticApp.getDataFolder() + "/apktool/smali");
 		initClassBuilders(staticApp, smaliFolder);
 		int threadCount = Runtime.getRuntime().availableProcessors();
-		ExecutorService executor = Executors.newFixedThreadPool(threadCount/2);
+		ExecutorService executor = Executors.newFixedThreadPool(threadCount);
 		System.out.println("class builders size " + classBuilders.size());
 		for (StaticClassBuilder classBuilder : classBuilders)
 		{

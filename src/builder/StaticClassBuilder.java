@@ -17,10 +17,11 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 	private ArrayList<String> smaliCode;
 	private String smaliFilePath;
 	private int maxOriginalLineNumber;
+	private int index = 1;
+	private MethodContext methodContext = new MethodContext();
 
 	@Override
 	public StaticClass call() throws Exception {
-		
 		StaticClass c = new StaticClass();
 		/** Pre-method section:
 	 	 1. Class attributes
@@ -30,7 +31,6 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 		{
 			c.setDeclaration(smaliCode.get(0));
 		}
-		int index = 1;
 		while (index < smaliCode.size())
 		{
 			String line = smaliCode.get(index++);
@@ -143,7 +143,7 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 				String params = subSig.substring(subSig.indexOf("(") + 1, subSig.indexOf(")"));
 				m.setSignature(fullSig);
 				m.setParamTypes(Utility.parseParameters(params));
-				MethodContext methodContext = new MethodContext();
+				methodContext.currentLineNumber = -1;
 				methodContext.label = new BlockLabel();
 				methodContext.label.setNormalLabels(new ArrayList<String>(Arrays.asList(":main")));
 				methodContext.normalLabelAlreadyUsed = false;
@@ -156,15 +156,15 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 						continue;
 					if (line.startsWith("."))
 					{
-						parseDots(m, line, methodContext, index);
+						parseDots(m, line);
 					}
 					else if (line.startsWith(":"))
 					{
-						parseColons(m, line, methodContext);
+						parseColons(m, line);
 					}
 					else
 					{
-						StaticStmt s = buildStaticStmt(m, line, methodContext);
+						StaticStmt s = buildStaticStmt(m, line);
 						m.addSmaliStmt(s);
 						/** Instrumentation 1:
 						If current statement doesn't have a line number, we give
@@ -177,6 +177,13 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 							while (!tempLine.equals("") && !tempLine.equals("    .prologue"))
 								tempLine = smaliCode.get(--insertionLocation);
 							smaliCode.add(insertionLocation+1, toAdd);
+							++index;
+							s.setSourceLineNumber(this.maxOriginalLineNumber-1);
+						}
+						else
+						{
+							s.setSourceLineNumber(methodContext.currentLineNumber);
+							methodContext.currentLineNumber = -1;
 						}
 						/** Instrumentation 2:
 						 For concolic execution, we need to let jdb recognize
@@ -192,6 +199,7 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 										", \"" + debugName + "\":I";
 								int insertionLocation = index - 1;
 								smaliCode.add(insertionLocation, toAdd);
+								++index;
 							}
 						}
 					}
@@ -206,9 +214,9 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 		return c;
 	}
 
-	private void parseDots(StaticMethod m, String line, MethodContext methodContext, int index)
+	private void parseDots(StaticMethod m, String line)
 	{
-		if (line.startsWith(".line"))
+		if (line.startsWith(".line "))
 		{
 			/**  
 			   ran into a weird app that gave same line number to two
@@ -273,19 +281,37 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 		}
 	}
 	
-	private void parseColons(StaticMethod m, String line, MethodContext methodContext)
+	private void parseColons(StaticMethod m, String line)
 	{
 		if (line.startsWith(":array_"))
 		{
-			
+			while (!line.equals(".end array-data") && index < smaliCode.size())
+			{
+				line = smaliCode.get(index++);
+				if (line.contains(" "))
+					line = line.trim();
+				//TODO
+			}
 		}
-		else if (line.startsWith("::sswitch_data_"))
+		else if (line.startsWith(":sswitch_data_"))
 		{
-			
+			while (!line.equals(".end sparse-switch") && index < smaliCode.size())
+			{
+				line = smaliCode.get(index++);
+				if (line.contains(" "))
+					line = line.trim();
+				//TODO
+			}
 		}
-		else if (line.startsWith("::pswitch_data_"))
+		else if (line.startsWith(":pswitch_data_"))
 		{
-			
+			while (!line.equals(".end packed-switch") && index < smaliCode.size())
+			{
+				line = smaliCode.get(index++);
+				if (line.contains(" "))
+					line = line.trim();
+				//TODO
+			}
 		}
 		else if (line.startsWith(":try_start_"))
 		{
@@ -313,7 +339,7 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 		}
 	}
 	
-	private StaticStmt buildStaticStmt(StaticMethod m, String line, MethodContext methodContext)
+	private StaticStmt buildStaticStmt(StaticMethod m, String line)
 	{
 		// smali stmt
 		// statement id
@@ -323,7 +349,7 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 		s.setSmaliStmt(line);
 		s.setBlockLabel(methodContext.label.clone());
 		methodContext.normalLabelAlreadyUsed = true;
-		ExpressionBuilder.buildExpression(s, line);
+		//ExpressionBuilder.buildExpression(s, line);
 		return s;
 	}
 	
@@ -332,7 +358,7 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 	}
 
 	public void setSmaliCode(ArrayList<String> smaliCode) {
-		this.smaliCode = smaliCode;
+		this.smaliCode = new ArrayList<String>(smaliCode);
 	}
 
 	public void setSmaliFilePath(String smaliFilePath) {
@@ -343,6 +369,7 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 	private class MethodContext {
 		BlockLabel label;
 		boolean normalLabelAlreadyUsed;
+		boolean needAddLineNumber;
 		int currentLineNumber;
 		
 	}

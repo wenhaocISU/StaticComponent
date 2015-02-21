@@ -11,9 +11,9 @@ public class StaticStmt {
 	private int sourceLineNumber = -1;
 	private BlockLabel blockLabel;
 	private String vA = "", vB = "", vC = "";
-	private boolean hasCatch, hasFinally;
+	private boolean hasCatch = false, hasFinally = false;
 	private Map<String, String> ExceptionMap = new HashMap<String, String>();
-	private boolean isSwitchStmt;
+	private boolean isSwitchStmt = false;
 	/**
 	 data is used differently by different statement types:
 	 Switch: case switch map: Map<Integer, String>. (<value, jumpLabel>)
@@ -21,7 +21,7 @@ public class StaticStmt {
 	 **/
 	private Object data;
 	
-	private Expression expression = null;
+	private Expression expression;
 	
 	/**
 	 Only 1 of the following 5 boolean values can be true
