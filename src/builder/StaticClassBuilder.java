@@ -22,14 +22,15 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 	public StaticClass call() throws Exception {
 		
 		StaticClass c = new StaticClass();
-		// First Line
+		/** Pre-method section:
+	 	 1. Class attributes
+	 	 2. Fields
+		 **/
 		if (smaliCode.size() > 0)
 		{
 			c.setDeclaration(smaliCode.get(0));
 		}
 		int index = 1;
-		
-		// Parse Pre-Method Section
 		while (index < smaliCode.size())
 		{
 			String line = smaliCode.get(index++);
@@ -165,7 +166,8 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 					{
 						StaticStmt s = buildStaticStmt(m, line, methodContext);
 						m.addSmaliStmt(s);
-						/** If current statement doesn't have a line number, we give
+						/** Instrumentation 1:
+						If current statement doesn't have a line number, we give
 						it one. **/
 						if (methodContext.currentLineNumber == -1)
 						{
@@ -176,7 +178,8 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 								tempLine = smaliCode.get(--insertionLocation);
 							smaliCode.add(insertionLocation+1, toAdd);
 						}
-						/** For concolic execution, we need to let jdb recognize
+						/** Instrumentation 2:
+						 For concolic execution, we need to let jdb recognize
 						 the switch variable. **/
 						if (s.isSwitchStmt())
 						{
@@ -276,7 +279,7 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 		{
 			
 		}
-		else if (line.startsWith("::switch_data_"))
+		else if (line.startsWith("::sswitch_data_"))
 		{
 			
 		}
@@ -294,7 +297,7 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 					line.replace("_end_", "_start_"));
 		}
 		else
-		{	// Here is the regular labels
+		{	// This is the regular label section
 			if (methodContext.normalLabelAlreadyUsed)
 			{
 				ArrayList<String> newNormalLabel = new ArrayList<String>();
@@ -320,7 +323,7 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 		s.setSmaliStmt(line);
 		s.setBlockLabel(methodContext.label.clone());
 		methodContext.normalLabelAlreadyUsed = true;
-		ExpressionBuilder.buildExpression(s);
+		ExpressionBuilder.buildExpression(s, line);
 		return s;
 	}
 	
@@ -340,7 +343,6 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 	private class MethodContext {
 		BlockLabel label;
 		boolean normalLabelAlreadyUsed;
-		boolean needToAddLineNumber;
 		int currentLineNumber;
 		
 	}

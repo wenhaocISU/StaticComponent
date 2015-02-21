@@ -5,34 +5,7 @@ public class DalvikBytecodeFormat {
 
 
 	
-	/**
-	Important Statements:
-	 1-9: move
-	 10-12: move result 
-	 14-17: return
-	 18-28: const
-	 32: instance-of
-	 33: array-length
-	 34: new-instance
-	 35-38: new-array ?
-	 39: throw
-	 40-42: goto
-	 43-44: switch
-	 45-49: complex number comparing
-	 50-61: if
-	 62-68: aget
-	 69-75: aput
-	 76-82: iget
-	 83-89: iput
-	 90-96: sget
-	 97-103: sput
-	 104-114: invoke
-	 115-120: unop - operation
-	 121-135: unop - number type conversion
-	 136-167: binop - operation
-	 168-199: binop/2addr - operation
-	 200-218: binop/lit16(8) - operation
-	**/
+
 	public static String[] smaliStatements = {
 		"nop",
 		"move",
@@ -254,5 +227,33 @@ public class DalvikBytecodeFormat {
 		"shr-int/lit8",
 		"ushr-int/lit8"
 	};
-	
+	/**
+	Important Statements:
+	 1-9: move
+	 10-12: move result 
+	 14-17: return
+	 18-28: const
+	 32: instance-of
+	 33: array-length
+	 34: new-instance
+	 35-38: new-array ?
+	 39: throw
+	 40-42: goto
+	 43-44: switch
+	 45-49: complex number comparing
+	 50-55: if
+	 56-61: ifz
+	 62-68: aget
+	 69-75: aput
+	 76-82: iget
+	 83-89: iput
+	 90-96: sget
+	 97-103: sput
+	 104-114: invoke
+	 115-120: unop - operation
+	 121-135: unop - number type conversion
+	 136-167: binop - operation
+	 168-199: binop/2addr - operation
+	 200-218: binop/lit16(8) - operation
+	**/
 }
