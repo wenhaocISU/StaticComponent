@@ -232,12 +232,14 @@ public class ExpressionBuilder {
 		String bytecodeOp = (line.contains(" "))?
 				line.substring(0, line.indexOf(" ")) : line;
 		int stmtIndex = 0;
+		/** first find the bytecode instruction index */
 		while (stmtIndex < 219)
 		{
 			if (bytecodeOp.equals(smaliStatements[stmtIndex]))
 				break;
 			++stmtIndex;
 		}
+		/** move */
 		if (stmtIndex >= 1 && stmtIndex <= 9)
 		{
 			Expression ex = new Expression("");
