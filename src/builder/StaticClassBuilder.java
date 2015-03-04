@@ -244,12 +244,21 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 				if (!s.getBlockLabel().getTryLabels().contains(range))
 					continue;
 				s.setHasCatch(true);
-				//TODO
+				s.getExceptionMap().put(exceptionType, tgtLabel);
 			}
 		}
 		else if (line.startsWith(".catchall "))
 		{
-			//TODO
+			String range = line.substring(line.indexOf("{")+1, line.indexOf("}"));
+			range = range.split(" .. ")[0];
+			String tgtLabel = line.substring(line.lastIndexOf(" :")+1);
+			for (StaticStmt s : m.getSmaliStmts())
+			{
+				if (!s.getBlockLabel().getTryLabels().contains(range))
+					continue;
+				s.hasFinally();
+				s.setFinallyTargetLabel(tgtLabel);
+			}
 		}
 		else if (line.startsWith(".locals "))
 		{

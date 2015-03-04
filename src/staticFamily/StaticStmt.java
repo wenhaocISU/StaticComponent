@@ -13,6 +13,7 @@ public class StaticStmt {
 	private String vA = "", vB = "", vC = "";
 	private boolean hasCatch = false, hasFinally = false;
 	private Map<String, String> ExceptionMap = new HashMap<String, String>();
+	private String finallyTargetLabel;
 	private boolean isSwitchStmt = false;
 	/**
 	 data is used differently by different statement types:
@@ -145,6 +146,12 @@ public class StaticStmt {
 	}
 	public void setIsSwitchStmt(boolean isSwitchStmt) {
 		this.isSwitchStmt = isSwitchStmt;
+	}
+	public String getFinallyTargetLabel() {
+		return finallyTargetLabel;
+	}
+	public void setFinallyTargetLabel(String finallyTargetLabel) {
+		this.finallyTargetLabel = finallyTargetLabel;
 	}
 	
 }
