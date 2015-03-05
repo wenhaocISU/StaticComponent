@@ -5,6 +5,7 @@ import symbolic.Expression;
 
 public class ExpressionBuilder {
 
+	
 	private String[] smaliStatements = {
 		"nop",
 		"move",
@@ -239,132 +240,172 @@ public class ExpressionBuilder {
 				break;
 			++stmtIndex;
 		}
+		assert(stmtIndex > 218);
 		/** move */
 		if (stmtIndex >= 1 && stmtIndex <= 9)
 		{
-			Expression ex = new Expression("");
+			String vA = line.substring(line.indexOf(" ")+1, line.indexOf(", "));
+			String vB = line.substring(line.indexOf(", ")+2);
+			s.setvA(vA);
+			s.setvB(vB);
+			Expression ex = new Expression("=");
+			ex.add(new Expression(vA));
+			ex.add(new Expression(vB));
 			s.setExpression(ex);
 		}
+		/** move-result */
 		else if (stmtIndex >= 10 && stmtIndex <= 12)
 		{
-			Expression ex = new Expression("");
+			String vA = line.substring(line.indexOf(" ")+1, line.indexOf(", "));
+			s.setvA(vA);
+			Expression ex = new Expression("=");
+			ex.add(new Expression(vA));
+			ex.add(new Expression("$newestInvokeResult"));
 			s.setExpression(ex);
 		}
+		/** return */
 		else if (stmtIndex >= 14 && stmtIndex <= 17)
 		{
-			Expression ex = new Expression("");
+			String vA = line.substring(line.indexOf(" ")+1, line.indexOf(", "));
+			s.setvA(vA);
+			Expression ex = new Expression("=");
+			ex.add(new Expression("$return"));
+			ex.add(new Expression(vA));
 			s.setExpression(ex);
 		}
+		/** const */
 		else if (stmtIndex >= 18 && stmtIndex <= 28)
 		{
-			Expression ex = new Expression("");
+			Expression ex = new Expression("=");
 			s.setExpression(ex);
 		}
+		/** instance-of */
 		else if (stmtIndex == 32)
 		{
 			Expression ex = new Expression("");
 			s.setExpression(ex);
 		}
+		/** array-length */
 		else if (stmtIndex == 33)
 		{
 			Expression ex = new Expression("");
 			s.setExpression(ex);
 		}
+		/** new-instance */
 		else if (stmtIndex == 34)
 		{
 			Expression ex = new Expression("");
 			s.setExpression(ex);
 		}
+		/** new array */
 		else if (stmtIndex >= 35 && stmtIndex <= 38)
 		{
 			Expression ex = new Expression("");
 			s.setExpression(ex);
 		}
+		/** throw */
 		else if (stmtIndex == 39)
 		{
 			Expression ex = new Expression("");
 			s.setExpression(ex);
 		}
+		/** goto */
 		else if (stmtIndex >= 40 && stmtIndex <= 42)
 		{
 			Expression ex = new Expression("");
 			s.setExpression(ex);
 		}
+		/** packed/sparse switch*/
 		else if (stmtIndex == 43 || stmtIndex == 44)
 		{
 			Expression ex = new Expression("");
 			s.setExpression(ex);
 		}
+		/** float, long, double comparison */
 		else if (stmtIndex >= 45 && stmtIndex <= 49)
 		{
 			Expression ex = new Expression("");
 			s.setExpression(ex);
 		}
+		/** if between two variables */
 		else if (stmtIndex >= 50 && stmtIndex <= 55)
 		{
 			Expression ex = new Expression("");
 			s.setExpression(ex);
 		}
+		/** ifz */
 		else if (stmtIndex >= 56 && stmtIndex <= 61)
 		{
 			Expression ex = new Expression("");
 			s.setExpression(ex);
 		}
+		/** aget */
 		else if (stmtIndex >= 62 && stmtIndex <= 68)
 		{
 			Expression ex = new Expression("");
 			s.setExpression(ex);
 		}
+		/** aput */
 		else if (stmtIndex >= 69 && stmtIndex <= 75)
 		{
 			Expression ex = new Expression("");
 			s.setExpression(ex);
 		}
+		/** iget */
 		else if (stmtIndex >= 76 && stmtIndex <= 82)
 		{
 			Expression ex = new Expression("");
 			s.setExpression(ex);
 		}
+		/** iput */
 		else if (stmtIndex >= 83 && stmtIndex <= 89)
 		{
 			Expression ex = new Expression("");
 			s.setExpression(ex);
 		}
+		/** sget */
 		else if (stmtIndex >= 90 && stmtIndex <= 96)
 		{
 			Expression ex = new Expression("");
 			s.setExpression(ex);
 		}
+		/** sput */
 		else if (stmtIndex >= 97 && stmtIndex <= 103)
 		{
 			Expression ex = new Expression("");
 			s.setExpression(ex);
 		}
+		/** invoke */
 		else if (stmtIndex >= 104 && stmtIndex <= 114)
 		{
 			Expression ex = new Expression("");
 			s.setExpression(ex);
 		}
+		/** neg, not */
 		else if (stmtIndex >= 115 && stmtIndex <= 120)
 		{
 			Expression ex = new Expression("");
 			s.setExpression(ex);
 		}
+		/** primitive type conversion */
 		else if (stmtIndex >= 121 && stmtIndex <= 135)
 		{
 			Expression ex = new Expression("");
 			s.setExpression(ex);
 		}
+		/** binop operation (3 addresses: a = b op c) */
 		else if (stmtIndex >= 136 && stmtIndex <= 167)
 		{
 			Expression ex = new Expression("");
 			s.setExpression(ex);
 		}
+		/** binop operation (2 addresses: a = a op b) */
 		else if (stmtIndex >= 168 && stmtIndex <= 199)
 		{
 			Expression ex = new Expression("");
 			s.setExpression(ex);
 		}
+		/** binop operation (with constants: a = b op #c) */
 		else if (stmtIndex >= 200 && stmtIndex <= 218)
 		{
 			Expression ex = new Expression("");

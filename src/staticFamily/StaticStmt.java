@@ -22,7 +22,7 @@ public class StaticStmt {
 	 **/
 	private Object data;
 	
-	private Expression expression;
+	private Expression expression = null;
 	
 	/**
 	 Only 1 of the following 5 boolean values can be true
