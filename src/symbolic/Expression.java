@@ -1,4 +1,4 @@
-package analysis;
+package symbolic;
  
 import java.util.Collection;
 import java.util.HashSet;

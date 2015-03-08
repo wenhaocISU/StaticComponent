@@ -5,7 +5,15 @@ import symbolic.Expression;
 
 public class ExpressionBuilder {
 
-	
+	/**
+	The following statements are ignored
+	until it's neccessary to process them:
+		instance-of
+		check-case
+		monitor-enter
+		monitor-exit
+		move-exception
+	*/
 	private String[] smaliStatements = {
 		"nop",
 		"move",
@@ -228,6 +236,7 @@ public class ExpressionBuilder {
 		"ushr-int/lit8"
 	};
 
+	
 	public void buildExpression(StaticStmt s, String line)
 	{
 		String bytecodeOp = (line.contains(" "))?
@@ -268,22 +277,22 @@ public class ExpressionBuilder {
 		{
 			String vA = line.substring(line.indexOf(" ")+1, line.indexOf(", "));
 			s.setvA(vA);
-			Expression ex = new Expression("=");
-			ex.add(new Expression("$return"));
-			ex.add(new Expression(vA));
-			s.setExpression(ex);
 		}
-		/** const */
+		/** const types:
+		 		int(default),
+		 		
+		*/
 		else if (stmtIndex >= 18 && stmtIndex <= 28)
 		{
 			Expression ex = new Expression("=");
+			
 			s.setExpression(ex);
 		}
 		/** instance-of */
 		else if (stmtIndex == 32)
 		{
-			Expression ex = new Expression("");
-			s.setExpression(ex);
+/*			Expression ex = new Expression("");
+			s.setExpression(ex);*/
 		}
 		/** array-length */
 		else if (stmtIndex == 33)
@@ -405,7 +414,10 @@ public class ExpressionBuilder {
 			Expression ex = new Expression("");
 			s.setExpression(ex);
 		}
-		/** binop operation (with constants: a = b op #c) */
+		/** binop operation (with constants: a = b op #c) 
+		 	lit16 - 16 bit constant
+		 	lit8 - 8 bit constant (probably doesn't matter)
+		 */
 		else if (stmtIndex >= 200 && stmtIndex <= 218)
 		{
 			Expression ex = new Expression("");
