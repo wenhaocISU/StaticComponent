@@ -1,14 +1,18 @@
 package staticFamily;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
 import symbolic.Expression;
 
-public class StaticStmt {
+public class StaticStmt implements Serializable{
 
+	private static final long serialVersionUID = 1L;
+	
 	private String smaliStmt = "";
 	private int sourceLineNumber = -1;
+	private int stmtID = -1;
 	private BlockLabel blockLabel;
 	private String vA = "", vB = "", vC = "";
 	private boolean hasCatch = false, hasFinally = false;
@@ -25,10 +29,11 @@ public class StaticStmt {
 	private Expression expression = null;
 	
 	/**
-	 Only 1 of the following 5 boolean values can be true
+	 Only 1 of the following 6 boolean values can be true
 	 	boolean endsMethod()
-	 	boolean unconditionallyJumps()
-	 	boolean conditionallyJumps()
+	 	boolean ifJumps()
+	 	boolean switchJumps()
+	 	boolean gotoJumps()
 	 	boolean updatesSymbolicStates();
 	 	boolean invokesMethod()
 	 **/
@@ -37,14 +42,17 @@ public class StaticStmt {
 		return (smaliStmt.startsWith("return") || 
 				smaliStmt.startsWith("throw"));
 	}
-	public boolean unconditionallyJumps()
+	public boolean gotoJumps()
 	{
 		return (smaliStmt.startsWith("goto"));
 	}
-	public boolean conditionallyJumps()
+	public boolean ifJumps()
 	{
-		return (smaliStmt.startsWith("if") || 
-				smaliStmt.startsWith("packed-switch") ||
+		return (smaliStmt.startsWith("if"));
+	}
+	public boolean switchJumps()
+	{
+		return (smaliStmt.startsWith("packed-switch") ||
 				smaliStmt.startsWith("sparse-switch"));
 	}
 	public boolean updatesSymbolicStates()
@@ -152,6 +160,14 @@ public class StaticStmt {
 	}
 	public void setFinallyTargetLabel(String finallyTargetLabel) {
 		this.finallyTargetLabel = finallyTargetLabel;
+	}
+	public int getStmtID()
+	{
+		return stmtID;
+	}
+	public void setStmtID(int stmtID)
+	{
+		this.stmtID = stmtID;
 	}
 	
 }

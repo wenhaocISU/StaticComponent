@@ -175,5 +175,12 @@ public class StaticClass implements Serializable {
 		this.isDefinedInsideMethod = isDefinedInsideMethod;
 	}
 	
+	public StaticMethod getMethod(String methodSignature)
+	{
+		for (StaticMethod m : this.methods)
+			if (m.getSignature().equals(methodSignature))
+				return m;
+		return null;
+	}
 	
 }

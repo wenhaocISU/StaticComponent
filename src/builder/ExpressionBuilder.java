@@ -236,6 +236,15 @@ public class ExpressionBuilder {
 		"ushr-int/lit8"
 	};
 
+	/**
+	 Only 1 of the following 6 boolean values can be true
+	 	return, throw - endsMethod()
+	 	if - 			ifJumps()
+	 	switch - 		switchJumps()
+	 	goto - 			gotoJumps()
+	 	expression - 	updatesSymbolicStates()
+	 	invoke -		boolean invokesMethod()
+	 **/
 	
 	public void buildExpression(StaticStmt s, String line)
 	{
@@ -249,8 +258,7 @@ public class ExpressionBuilder {
 				break;
 			++stmtIndex;
 		}
-		assert(stmtIndex > 218);
-		/** move */
+		/** move - updatesSymbolicStates*/
 		if (stmtIndex >= 1 && stmtIndex <= 9)
 		{
 			String vA = line.substring(line.indexOf(" ")+1, line.indexOf(", "));
@@ -262,25 +270,34 @@ public class ExpressionBuilder {
 			ex.add(new Expression(vB));
 			s.setExpression(ex);
 		}
-		/** move-result */
+		/** move-result - updatesSymbolicStates*/
 		else if (stmtIndex >= 10 && stmtIndex <= 12)
 		{
-			String vA = line.substring(line.indexOf(" ")+1, line.indexOf(", "));
+			String vA = line.substring(line.indexOf(" ")+1);
 			s.setvA(vA);
 			Expression ex = new Expression("=");
 			ex.add(new Expression(vA));
 			ex.add(new Expression("$newestInvokeResult"));
 			s.setExpression(ex);
 		}
-		/** return */
-		else if (stmtIndex >= 14 && stmtIndex <= 17)
+		/** return-void - no expression needed*/
+		else if (stmtIndex == 14)
 		{
-			String vA = line.substring(line.indexOf(" ")+1, line.indexOf(", "));
+			
+		}
+		/** return variable - endsMethod*/
+		else if (stmtIndex > 14 && stmtIndex <= 17)
+		{
+			String vA = line.substring(line.indexOf(" ")+1);
 			s.setvA(vA);
+			Expression ex = new Expression("=");
+			ex.add(new Expression(vA));
+			ex.add(new Expression("$return"));
+			s.setExpression(ex);
 		}
 		/** const types:
-		 		int(default),
-		 		
+			'const' and 'const-wide': arbitrary 32/64 bit constant
+			with suffix '/high16': the 16 bit constant is right-zero-extended to 32/64 bit
 		*/
 		else if (stmtIndex >= 18 && stmtIndex <= 28)
 		{
@@ -288,7 +305,7 @@ public class ExpressionBuilder {
 			
 			s.setExpression(ex);
 		}
-		/** instance-of */
+		/** instance-of - skipped for now */
 		else if (stmtIndex == 32)
 		{
 /*			Expression ex = new Expression("");
@@ -312,17 +329,15 @@ public class ExpressionBuilder {
 			Expression ex = new Expression("");
 			s.setExpression(ex);
 		}
-		/** throw */
+		/** throw endsMethod*/
 		else if (stmtIndex == 39)
 		{
-			Expression ex = new Expression("");
-			s.setExpression(ex);
+			
 		}
-		/** goto */
+		/** goto gotoJump*/
 		else if (stmtIndex >= 40 && stmtIndex <= 42)
 		{
-			Expression ex = new Expression("");
-			s.setExpression(ex);
+			
 		}
 		/** packed/sparse switch*/
 		else if (stmtIndex == 43 || stmtIndex == 44)

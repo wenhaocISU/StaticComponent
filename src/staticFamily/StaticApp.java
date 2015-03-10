@@ -56,6 +56,15 @@ public class StaticApp implements Serializable{
 		return null;
 	}
 
+	public StaticClass findClassByDexName(String name)
+	{
+		for (StaticClass c : classes)
+			if (c.getDexName().equals(name))
+				return c;
+		return null;
+		
+	}
+	
 	public String getInstrumentedApkPath() {
 		String result = this.dataFolder + "/";
 		result += apkPath.substring(apkPath.lastIndexOf("/")+1, apkPath.lastIndexOf(".apk"));
@@ -68,6 +77,19 @@ public class StaticApp implements Serializable{
 		result += apkPath.substring(apkPath.lastIndexOf("/")+1, apkPath.lastIndexOf(".apk"));
 		result += "_unsigned.apk";
 		return result;
+	}
+	
+	public StaticMethod findMethod(String methodSignature)
+	{
+		if (!methodSignature.contains("->"))
+			return null;
+		String className = methodSignature.substring(0, methodSignature.indexOf("->"));
+		StaticClass c = findClassByDexName(className);
+		if (c != null)
+		{
+			return c.getMethod(methodSignature);
+		}
+		return null;
 	}
 	
 }

@@ -70,7 +70,7 @@ public class Utility {
 		put("D", "double");
 	}};
 	
-	public static String nameDexToJava(String dexName)
+	public static String dexToJavaTypeName(String dexName)
 	{
 		if (dexName.startsWith("L") && dexName.endsWith(";"))
 			return dexName.substring(1, dexName.length()-1).replace("/", ".");
@@ -79,7 +79,7 @@ public class Utility {
 		return "";
 	}
 	
-	public static String nameJavaToDex(String javaName)
+	public static String javaToDexTypeName(String javaName)
 	{
 		switch (javaName) {
 		case "V":	return "void";
@@ -95,13 +95,6 @@ public class Utility {
 	}
 	}
 	
-	public static String dexToJavaTypeName(String dex) {
-		if (dex.startsWith("L") && dex.endsWith(";"))
-			return dex.substring(1, dex.length()-1).replace("/", ".");
-		else if (primitiveTypes.containsKey(dex))
-			return primitiveTypes.get(dex);
-		return "";
-	}
 	
 	public static ArrayList<String> parseParameters(String p) {
 		ArrayList<String> result = new ArrayList<String>();

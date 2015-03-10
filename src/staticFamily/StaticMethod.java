@@ -139,4 +139,16 @@ public class StaticMethod implements Serializable {
 		this.variableDebugInfo.put(localName, debugName);
 	}
 
+	public boolean isStatic()
+	{
+		return this.declaration.contains(" static ");
+	}
+	
+	public StaticStmt getFirstStmtOfBlock(String label) {
+		for (StaticStmt s : smaliStmts) {
+			if (s.getBlockLabel().getNormalLabels().contains(label))
+				return s;
+		}
+		return null;
+	}
 }

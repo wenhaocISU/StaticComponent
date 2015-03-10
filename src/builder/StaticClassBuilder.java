@@ -25,8 +25,8 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 	public StaticClass call() throws Exception {
 		StaticClass c = new StaticClass();
 		/** Pre-method section:
-	 	 1. Class attributes
-	 	 2. Fields
+	 	 	 1. Class attributes
+	 	 	 2. Fields
 		 **/
 		if (smaliCode.size() > 0)
 		{
@@ -40,7 +40,7 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 			if (line.startsWith(".super "))
 			{
 				String superClassName = line.substring(line.lastIndexOf(" ")+1);
-				c.setSuperClass(Utility.nameDexToJava(superClassName));
+				c.setSuperClass(Utility.dexToJavaTypeName(superClassName));
 			}
 			else if (line.startsWith(".source \""))
 			{
@@ -68,7 +68,7 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 					{
 						String memberClassName = line.substring(
 								line.indexOf("L"), line.lastIndexOf(","));
-						c.addInnerClass(Utility.nameDexToJava(memberClassName));
+						c.addInnerClass(Utility.dexToJavaTypeName(memberClassName));
 					}
 				}
 			}
@@ -95,7 +95,7 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 					{
 						String methodSig = line.substring(line.lastIndexOf(" = ")+3);
 						String className = methodSig.substring(0, methodSig.indexOf("->"));
-						c.setOuterClass(Utility.nameDexToJava(className));
+						c.setOuterClass(Utility.dexToJavaTypeName(className));
 						c.setIsDefinedInsideMethod(true);
 					}
 				}
@@ -109,7 +109,7 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 					if (line.startsWith("    value = "))
 					{
 						String className = line.substring(line.lastIndexOf(" = ")+3);
-						c.setOuterClass(Utility.nameDexToJava(className));
+						c.setOuterClass(Utility.dexToJavaTypeName(className));
 					}
 				}
 			}
@@ -144,7 +144,9 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 				String params = subSig.substring(subSig.indexOf("(") + 1, subSig.indexOf(")"));
 				m.setSignature(fullSig);
 				m.setParamTypes(Utility.parseParameters(params));
+				m.setDeclaration(line);
 				methodContext.currentLineNumber = -1;
+				methodContext.currentStmtID = 0;
 				methodContext.label = new BlockLabel();
 				methodContext.label.setNormalLabels(new ArrayList<String>(Arrays.asList(":main")));
 				methodContext.normalLabelAlreadyUsed = false;
@@ -205,6 +207,7 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 							}
 						}
 					}
+					c.addMethod(m);
 				}
 			}
 		}
@@ -362,6 +365,7 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 		// block label
 		// line number
 		StaticStmt s = new StaticStmt();
+		s.setStmtID(methodContext.currentStmtID++);
 		s.setSmaliStmt(line);
 		s.setBlockLabel(methodContext.label.clone());
 		methodContext.normalLabelAlreadyUsed = true;
@@ -386,6 +390,7 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 		BlockLabel label;
 		boolean normalLabelAlreadyUsed;
 		int currentLineNumber;
+		int currentStmtID;
 	}
 	
 }
