@@ -258,7 +258,7 @@ public class ExpressionBuilder {
 				break;
 			++stmtIndex;
 		}
-		/** move - updatesSymbolicStates*/
+		/** move */
 		if (stmtIndex >= 1 && stmtIndex <= 9)
 		{
 			String vA = line.substring(line.indexOf(" ")+1, line.indexOf(", "));
@@ -270,22 +270,20 @@ public class ExpressionBuilder {
 			ex.add(new Expression(vB));
 			s.setExpression(ex);
 		}
-		/** move-result - updatesSymbolicStates*/
+		/** move-result */
 		else if (stmtIndex >= 10 && stmtIndex <= 12)
 		{
 			String vA = line.substring(line.indexOf(" ")+1);
 			s.setvA(vA);
 			Expression ex = new Expression("=");
 			ex.add(new Expression(vA));
-			ex.add(new Expression("$newestInvokeResult"));
+			ex.add(new Expression("$return"));
 			s.setExpression(ex);
 		}
-		/** return-void - no expression needed*/
+		/** return-void  - no action needed */
 		else if (stmtIndex == 14)
-		{
-			
-		}
-		/** return variable - endsMethod*/
+		{}
+		/** return variable */
 		else if (stmtIndex > 14 && stmtIndex <= 17)
 		{
 			String vA = line.substring(line.indexOf(" ")+1);
@@ -307,14 +305,11 @@ public class ExpressionBuilder {
 		}
 		/** instance-of - skipped for now */
 		else if (stmtIndex == 32)
-		{
-/*			Expression ex = new Expression("");
-			s.setExpression(ex);*/
-		}
+		{}
 		/** array-length */
 		else if (stmtIndex == 33)
 		{
-			Expression ex = new Expression("");
+			Expression ex = new Expression("=");
 			s.setExpression(ex);
 		}
 		/** new-instance */
@@ -329,17 +324,17 @@ public class ExpressionBuilder {
 			Expression ex = new Expression("");
 			s.setExpression(ex);
 		}
-		/** throw endsMethod*/
+		/** throw - no action needed*/
 		else if (stmtIndex == 39)
 		{
 			
 		}
-		/** goto gotoJump*/
+		/** goto - parse the goto target label*/
 		else if (stmtIndex >= 40 && stmtIndex <= 42)
 		{
 			
 		}
-		/** packed/sparse switch*/
+		/** packed/sparse switch */
 		else if (stmtIndex == 43 || stmtIndex == 44)
 		{
 			Expression ex = new Expression("");

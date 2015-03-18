@@ -360,10 +360,6 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 	
 	private StaticStmt buildStaticStmt(StaticMethod m, String line)
 	{
-		// smali stmt
-		// statement id
-		// block label
-		// line number
 		StaticStmt s = new StaticStmt();
 		s.setStmtID(methodContext.currentStmtID++);
 		s.setSmaliStmt(line);
