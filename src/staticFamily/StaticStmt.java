@@ -147,7 +147,7 @@ public class StaticStmt implements Serializable{
 	
 	public void putData(Object data)
 	{
-		this.data = data;
+		this.setData(data);
 	}
 	public boolean isSwitchStmt() {
 		return isSwitchStmt;
@@ -168,6 +168,12 @@ public class StaticStmt implements Serializable{
 	public void setStmtID(int stmtID)
 	{
 		this.stmtID = stmtID;
+	}
+	public Object getData() {
+		return data;
+	}
+	public void setData(Object data) {
+		this.data = data;
 	}
 	
 }

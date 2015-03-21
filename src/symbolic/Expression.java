@@ -160,8 +160,8 @@ public class Expression extends DefaultMutableTreeNode{
 	
 	public Expression getReverseCondition() {
 		String op = this.getUserObject().toString();
-		if (op.equals("=="))		op = "!=";
-		else if (op.equals("!="))	op = "==";
+		if (op.equals("="))		op = "/=";
+		else if (op.equals("/="))	op = "=";
 		else if (op.equals("<"))	op = ">=";
 		else if (op.equals("<="))	op = ">";
 		else if (op.equals(">"))	op = "<=";

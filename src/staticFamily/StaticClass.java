@@ -183,4 +183,12 @@ public class StaticClass implements Serializable {
 		return null;
 	}
 	
+	public StaticField getField(String fieldSubSig)
+	{
+		for (StaticField f : this.fields)
+			if (f.getSubSignature().equals(fieldSubSig))
+				return f;
+		return null;
+	}
+	
 }

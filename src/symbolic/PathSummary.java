@@ -10,12 +10,14 @@ public class PathSummary implements Serializable{
 	private ArrayList<String> executionLog;
 	private ArrayList<Expression> symbolicStates;
 	private ArrayList<Expression> pathConditions;
+	private ArrayList<String> pathChoices;
 	private String methodSignature;
-	
+		
 	public PathSummary() {
 		executionLog = new ArrayList<String>();
 		symbolicStates = new ArrayList<Expression>();
 		pathConditions = new ArrayList<Expression>();
+		pathChoices = new ArrayList<String>();
 	};
 	
 	public ArrayList<String> getExecutionLog()
@@ -66,6 +68,19 @@ public class PathSummary implements Serializable{
 
 	public void setMethodSignature(String methodSignature) {
 		this.methodSignature = methodSignature;
+	}
+
+	public ArrayList<String> getPathChoices() {
+		return pathChoices;
+	}
+
+	public void addPathChoice(String pathChoice)
+	{
+		this.pathChoices.add(pathChoice);
+	}
+	
+	public void setPathChoices(ArrayList<String> pathChoices) {
+		this.pathChoices = pathChoices;
 	}
 
 }

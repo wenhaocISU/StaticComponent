@@ -92,4 +92,16 @@ public class StaticApp implements Serializable{
 		return null;
 	}
 	
+	public StaticField findField(String fieldSignature)
+	{
+		if (!fieldSignature.contains("->"))
+			return null;
+		String className = fieldSignature.substring(0, fieldSignature.indexOf("->"));
+		String subSig = fieldSignature.substring(fieldSignature.indexOf("->")+2);
+		StaticClass c = findClassByDexName(className);
+		if (c != null)
+			return c.getField(subSig);
+		return null;
+	}
+	
 }
