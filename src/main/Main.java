@@ -1,29 +1,25 @@
 package main;
 
-import java.io.File;
-
 import staticFamily.StaticApp;
-import staticFamily.StaticClass;
-import builder.StaticAppBuilder;
+import symbolic.SymbolicExecution;
+import analysis.StaticInfo;
 
 public class Main {
 
-	@SuppressWarnings("unused")
 	public static void main(String[] args) {
 
 		String apkPaths[] = {
-				"C:/Users/Wenhao/Documents/juno_workspace/AndroidTest/bin/AndroidTest.apk"
+				"C:/Users/Wenhao/Documents/juno_workspace/AndroidTest/bin/AndroidTest.apk",
+				"C:/Users/Wenhao/Documents/juno_workspace/AndroidTest/bin/TheApp.apk"
+				
 		};
 		
-		String apkPath = apkPaths[0];
+		String apkPath = apkPaths[1];
 		
-		StaticApp staticApp = StaticAppBuilder.buildOrReadStaticApp(apkPath, true);
+		StaticApp staticApp = StaticInfo.initAnalysis(apkPath, false);
 		
-		for (StaticClass c : staticApp.getClasses())
-			System.out.println(c.getJavaName());
-		//System.out.println(staticApp.getInstrumentedApkPath());
-		//System.out.println(staticApp.getUnsignedApkPath());
-		
+		SymbolicExecution sex = new SymbolicExecution(staticApp);
+		sex.doFullSymbolic("Lthe/app/MainActivity;->onCreate(Landroid/os/Bundle;)V");
 	}
 
 }
