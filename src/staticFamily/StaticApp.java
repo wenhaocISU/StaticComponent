@@ -104,4 +104,12 @@ public class StaticApp implements Serializable{
 		return null;
 	}
 	
+	public StaticClass getMainActivity()
+	{
+		for (StaticClass c : this.classes)
+			if (c.isMainActivity())
+				return c;
+		return null;
+	}
+	
 }

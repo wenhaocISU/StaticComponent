@@ -40,6 +40,11 @@ public class StaticMethod implements Serializable {
 		return signature.substring(0, signature.indexOf("->"));
 	}
 	
+	public StaticClass getDeclaringClass(StaticApp staticApp)
+	{
+		return staticApp.findClassByDexName(this.getDeclaringClass());
+	}
+	
 	public String getSubSignature() {
 		return signature.substring(signature.indexOf("->")+2, signature.length());
 	}
@@ -149,6 +154,14 @@ public class StaticMethod implements Serializable {
 			if (s.getBlockLabel().getNormalLabels().contains(label))
 				return s;
 		}
+		return null;
+	}
+
+	public StaticStmt getStmtByLineNumber(int newHitLine)
+	{
+		for (StaticStmt s : this.smaliStmts)
+			if (s.getSourceLineNumber() == newHitLine)
+				return s;
 		return null;
 	}
 }

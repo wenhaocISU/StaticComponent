@@ -146,7 +146,8 @@ public class StaticInfo {
 							targetF.addInCallSourceSigs(m.getSignature());
 					}
 				}
-			}*/
+			}
+*/
 		}
 		// Step 4
 		parseManifest(staticApp);
