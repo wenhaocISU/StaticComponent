@@ -1061,7 +1061,7 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 					first++;
 				}
 			}
-			else
+			else if (!params.equals(""))
 			{
 				ex.add(new Expression(params));
 			}

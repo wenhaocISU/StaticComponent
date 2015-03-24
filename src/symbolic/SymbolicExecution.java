@@ -82,11 +82,9 @@ public class SymbolicExecution {
 		{
 			if (this.debug)
 			{
-				System.out.println("[currentStmt]" 
+/*				System.out.println("[currentStmt]" 
 							+ className + ":" + s.getSourceLineNumber()
-							+ "  " + s.getSmaliStmt());
-				if (s.updatesSymbolicStates())
-				System.out.println("[currentEx]" + s.getExpression().toYicesStatement());
+							+ "  " + s.getSmaliStmt());*/
 			}
 			pS.addExecutionLog(className + ":" + s.getSourceLineNumber());
 			int nextStmtID = s.getStmtID()+1;
@@ -505,14 +503,17 @@ public class SymbolicExecution {
 						 * */
 						else if (rightSymbol.equals("$Fstatic"))
 						{
+							//System.out.println("[1]"+ex.toYicesStatement());
 							for (Expression outEx : symbolicContext.outExs)
 							{
 								Expression fieldEx = (Expression) outEx.getChildAt(0);
 								if (fieldEx.equals(right))
 								{
-									Expression thisValue = (Expression) fieldEx.getChildAt(1);
+									//System.out.println("[2]"+outEx.toYicesStatement());
+									Expression thisValue = ((Expression) outEx.getChildAt(1)).clone();
 									ex.remove(1);
 									ex.insert(thisValue, 1);
+									//System.out.println("[3]" + ex.toYicesStatement());
 									break;
 								}
 							}
@@ -626,8 +627,8 @@ public class SymbolicExecution {
 			}
 			s = allStmts.get(nextStmtID);
 		}
-		//if (inMainMethod)
-		if (true)
+		if (inMainMethod)
+		//if (true)
 		{
 			pS.setSymbolicStates(symbolicContext.outExs);
 			if (this.debug)
@@ -806,7 +807,7 @@ public class SymbolicExecution {
 					return value.clone();
 				}
 			}
-			return null;
+			return theLeft;
 		}
 		public void printAll()
 		{
@@ -821,6 +822,10 @@ public class SymbolicExecution {
 					for (Expression fieldEx : reg.fieldExs)
 						System.out.println("  " + fieldEx.toYicesStatement());
 				}
+			}
+			for (Expression outEx : outExs)
+			{
+				System.out.println("[outEx]" + outEx.toYicesStatement());
 			}
 		}
 		public Register findRegister(String name)

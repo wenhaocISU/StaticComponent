@@ -61,7 +61,7 @@ public class StaticStmt implements Serializable{
 	}
 	public boolean invokesMethod()
 	{
-		return (smaliStmt.startsWith("invoke-"));
+		return (smaliStmt.startsWith("invoke"));
 	}
 	
 	public String getSmaliStmt() {
