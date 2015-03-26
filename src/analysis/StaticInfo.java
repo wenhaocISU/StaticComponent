@@ -119,7 +119,8 @@ public class StaticInfo {
 			if (c.isInnerClass())
 			{
 				StaticClass outerC = staticApp.findClassByJavaName(c.getOuterClass());
-				outerC.addInnerClass(c.getJavaName());
+				if (outerC != null)
+					outerC.addInnerClass(c.getJavaName());
 			}
 // Call graph is skipped for now, it takes too long
 /*			for (StaticMethod m : c.getMethods())

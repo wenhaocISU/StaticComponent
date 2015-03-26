@@ -81,6 +81,8 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 			  'EnclosingMethod' annotation, which will specify
 			  where this inner class is declared. (inside of 
 			  a class, or inside of a method)
+			  UPDATE(03/26/2015): Found exceptions to this rule. Some classes
+			  in obad does not have either annotation needed.
 			**/
 			else if (line.equals(".annotation system Ldalvik/annotation/InnerClass;"))
 			{
@@ -188,6 +190,7 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 							smaliCode.add(insertLocation+1, toAdd);
 							++index;
 							s.setSourceLineNumber(this.maxOriginalLineNumber-1);
+							m.addSourceLineNumbers(s.getSourceLineNumber());
 						}
 						else
 						{
@@ -403,7 +406,7 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 					{
 						type = "char";
 						hex = line;
-						dec = Integer.parseInt(hex.replace("0x", "").replace("t", "")) + "";
+						dec = Integer.parseInt(hex.replace("0x", "").replace("t", ""), 16) + "";
 						
 						break;
 					}
@@ -411,7 +414,7 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 					{
 						type = "short";
 						hex = line;
-						dec = Integer.parseInt(hex.replace("0x", "").replace("s", "")) + "";
+						dec = Integer.parseInt(hex.replace("0x", "").replace("s", ""), 16) + "";
 						
 						break;
 					}
