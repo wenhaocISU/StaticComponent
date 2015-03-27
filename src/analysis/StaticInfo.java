@@ -93,7 +93,6 @@ public class StaticInfo {
 		initClassBuilders(staticApp, smaliFolder);
 		int threadCount = Runtime.getRuntime().availableProcessors();
 		ExecutorService executor = Executors.newFixedThreadPool(threadCount);
-		System.out.println("class builders size " + classBuilders.size());
 		for (StaticClassBuilder classBuilder : classBuilders)
 		{
 			try {
