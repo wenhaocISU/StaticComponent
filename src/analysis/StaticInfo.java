@@ -53,10 +53,10 @@ public class StaticInfo {
 			if (instrumentApps)
 			{
 				File instrumentedApp = new File(staticApp.getInstrumentedApkPath());
-				if (!instrumentedApp.exists())
+				if (!instrumentedApp.exists() || forceBuild)
 				{
 					File unsignedApp = new File(staticApp.getUnsignedApkPath());
-					if (!unsignedApp.exists())
+					if (!unsignedApp.exists() || forceBuild)
 					{
 						String sourceDir = staticApp.getDataFolder() + "/apktool";
 						String outPath = staticApp.getUnsignedApkPath();
