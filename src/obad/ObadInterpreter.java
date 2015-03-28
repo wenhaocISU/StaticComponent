@@ -16,8 +16,7 @@ public class ObadInterpreter {
 	
 	public static void main(String[] args)
 	{
-		staticApp = StaticInfo.initAnalysis(
-				"/home/wenhaoc/AppStorage/obad.apk", false);
+		staticApp = StaticInfo.initAnalysis(ObadData.apkPath, false);
 		for (StaticClass c : staticApp.getClasses())
 		{
 			for (StaticMethod m : c.getMethods())
@@ -25,7 +24,7 @@ public class ObadInterpreter {
 				for (StaticStmt s : m.getSmaliStmts())
 				{
 					if (s.invokesMethod() &&
-							s.getSmaliStmt().endsWith(";->cOIcOOo(III)Ljava/lang/String;"))
+							s.getSmaliStmt().endsWith(ObadData.encryptionMethodSig))
 					{
 
 						String targetSig = (String) s.getData();

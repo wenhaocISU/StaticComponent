@@ -92,7 +92,7 @@ public class Decryption {
 	public static void main(String[] args)
 	{
 		StaticApp staticApp = StaticInfo.initAnalysis(
-				"/home/wenhaoc/AppStorage/obad.apk", false);
+				ObadData.apkPath, false);
 		for (StaticClass c : staticApp.getClasses())
 		{
 			for (StaticMethod m : c.getMethods())
