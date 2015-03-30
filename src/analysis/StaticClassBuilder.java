@@ -201,7 +201,7 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 						 If current statement is the first statement or
 						 the return statement, we add println() to the code **/
 						if (s.getStmtID() == 0 && 
-							!Blacklist.classInBlackList(c.getJavaName()))
+							!Blacklist.classInBlackList(c.getDexName()))
 						{
 							String line1 = "    sget-object v0, Ljava/lang/System;->out:Ljava/io/PrintStream;";
 							String line2 = "    const-string v1, \"METHOD_STARTING," + m.getSignature() + "\"";
@@ -223,7 +223,7 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 							}
 						}
 						else if (s.getSmaliStmt().startsWith("return") &&
-								!Blacklist.classInBlackList(c.getJavaName()))
+								!Blacklist.classInBlackList(c.getDexName()))
 						{
 							ArrayList<Integer> occupiedReg = new ArrayList<Integer>();
 							int outVNo = 0, stringVNo = 0, returnVNo = -1;
