@@ -20,7 +20,10 @@ public class Blacklist {
 			"Landroid/support/v4/*",
 			"Landroid/support/v7/*",
 			"Landroid/support/annotation/*",
-			"Lcom/example/androidtest/R*"
+			"Lcom/example/androidtest/R*",
+			"Lcom/actionbarsherlock/*",
+			"Lcom/flurry/sdk/*",
+			"Lcom/flurry/android/*"
 	));
 	
 	

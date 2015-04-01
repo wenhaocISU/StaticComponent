@@ -82,12 +82,16 @@ public class SymbolicExecution {
 		{
 			if (this.debug)
 			{
-/*				System.out.println("[currentStmt]" 
+				System.out.println("[currentStmt]" 
 							+ className + ":" + s.getSourceLineNumber()
-							+ "  " + s.getSmaliStmt());*/
+							+ "  " + s.getSmaliStmt());
 			}
 			pS.addExecutionLog(className + ":" + s.getSourceLineNumber());
 			int nextStmtID = s.getStmtID()+1;
+			if (className.endsWith("MarshalBase64") && s.getSourceLineNumber() == 35)
+			{
+				System.out.println("here");
+			}
 			if (s.endsMethod())
 			{
 				if (!s.getvA().equals(""))
@@ -102,7 +106,18 @@ public class SymbolicExecution {
 			{
 				String targetSig = (String)s.getData();
 				StaticMethod targetM = staticApp.findMethod(targetSig);
-				if (targetM != null && !(this.blackListOn && blacklistCheck(targetM)))
+				/**
+				 * TODO: this version didn't properly deal with inheritance
+				 * 	and interfacing. In order to properly deal with it,
+				 * 	need to:
+				 * 	1. maintain a virtual method table when parsing classes.
+				 *  So that when met a invoke stmt, check if the method sig
+				 *  is the method body that will be invoked
+				 * 	2. maintain a Type field for each register. So that when
+				 *  met a invoke-interface, we will know which implementation
+				 *  of the class to look for the method body.
+				 * */
+				if (targetM != null && !targetM.isAbstract() && !(this.blackListOn && blacklistCheck(targetM)))
 				{
 					// First, initiate the subSymbolicContext by initiating
 					// parameter registers(different from entry method)
@@ -678,7 +693,7 @@ public class SymbolicExecution {
 		int counter = 1;
 		while (!toDoPathList.isEmpty())
 		{
-			System.out.println("[Symbolic Execution No." + counter++ + "]");
+			System.out.println("[Symbolic Execution No." + counter++ + "] " + entryMethod.getSignature());
 			ToDoPath toDoPath = toDoPathList.remove(toDoPathList.size()-1);
 			PathSummary anotherPS = new PathSummary();
 			//anotherPS.setSymbolicStates(this.initSymbolicStates(entryMethod));

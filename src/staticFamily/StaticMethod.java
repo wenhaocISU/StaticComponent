@@ -149,6 +149,11 @@ public class StaticMethod implements Serializable {
 		return this.declaration.contains(" static ");
 	}
 	
+	public boolean isAbstract()
+	{
+		return this.declaration.contains(" abstract ");
+	}
+	
 	public StaticStmt getFirstStmtOfBlock(String label) {
 		for (StaticStmt s : smaliStmts) {
 			if (s.getBlockLabel().getNormalLabels().contains(label))

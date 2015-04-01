@@ -286,8 +286,8 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 							}
 						}
 					}
-					c.addMethod(m);
 				}
+				c.addMethod(m);
 			}
 		}
 		/** Write instrumented code to file **/
