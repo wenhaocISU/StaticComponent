@@ -23,7 +23,11 @@ public class Blacklist {
 			"Lcom/example/androidtest/R*",
 			"Lcom/actionbarsherlock/*",
 			"Lcom/flurry/sdk/*",
-			"Lcom/flurry/android/*"
+			"Lcom/flurry/android/*",
+			"Lorg/kobjects/*",
+			"Lorg/ksoap2/*",
+			"Lorg/kxml2/*",
+			"Lorg/xmlpull/*"
 	));
 	
 	
