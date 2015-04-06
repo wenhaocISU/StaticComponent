@@ -112,4 +112,33 @@ public class StaticApp implements Serializable{
 		return null;
 	}
 	
+	/**
+	 * Needed input:
+	 * 	method signature
+	 * 	StaticApp
+	 *
+	 * Steps:
+	 * 	find StaticMethod from method signature. See which one of the 3 conditions it belong to:
+	 * 		a) Static/private method. These 2 kinds of method can not be a virtual method
+	 * 		b) Abstract method. The method has to be located within the specific object type where the method is implemented
+	 * 		c) class name in methodSig NOT EQUALS type of $param0. The method is overriden, need to look for the right one based on the specific object type
+	 * 		d) class name in methodSig EQUALS type of $param0. then
+	 * */
+	public StaticMethod findDynamicDispatchedMethodBody(String methodSig, String param0Type)
+	{
+		StaticMethod m = findMethod(methodSig);
+		if (m == null || m.isStatic() || m.isPrivate())
+			return m;
+		String classNameInSig = methodSig.substring(0, methodSig.indexOf("->"));
+		if (classNameInSig.equals(param0Type))
+		{
+			return m;
+		}
+		else
+		{
+			String newMethdSig = param0Type + methodSig.substring(methodSig.indexOf("->"));
+			return findMethod(newMethdSig);
+		}
+	}
+	
 }

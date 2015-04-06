@@ -88,10 +88,6 @@ public class SymbolicExecution {
 			}
 			pS.addExecutionLog(className + ":" + s.getSourceLineNumber());
 			int nextStmtID = s.getStmtID()+1;
-			if (className.endsWith("MarshalBase64") && s.getSourceLineNumber() == 35)
-			{
-				System.out.println("here");
-			}
 			if (s.endsMethod())
 			{
 				if (!s.getvA().equals(""))
@@ -105,7 +101,8 @@ public class SymbolicExecution {
 			else if (s.invokesMethod())
 			{
 				String targetSig = (String)s.getData();
-				StaticMethod targetM = staticApp.findMethod(targetSig);
+				//TODO find the type of p0
+				StaticMethod targetM = staticApp.findDynamicDispatchedMethodBody(targetSig, "");
 				/**
 				 * TODO: this version didn't properly deal with inheritance
 				 * 	and interfacing. In order to properly deal with it,
@@ -379,25 +376,39 @@ public class SymbolicExecution {
 							{
 								for (int i = 2; i < arrayEx.getChildCount(); i++)
 								{
+									// update the value of index and value of each element node
 									Expression elementEx = (Expression) arrayEx.getChildAt(i);
 									Expression indexEx = (Expression) elementEx.getChildAt(0);
 									Expression valueEx = (Expression) elementEx.getChildAt(1);
-									String indexSymbol = indexEx.getContent();
-									String valueSymbol = valueEx.getContent();
-									if (indexSymbol.startsWith("v")||indexSymbol.startsWith("p"))
-									{
-										Expression newIndexEx = symbolicContext.findValueOf(indexEx);
-										elementEx.remove(0);
-										elementEx.insert(newIndexEx, 0);
-									}
-									if (valueSymbol.startsWith("v")||valueSymbol.startsWith("p"))
-									{
-										Expression newValueEx = symbolicContext.findValueOf(valueEx);
-										elementEx.remove(1);
-										elementEx.insert(newValueEx, 1);
-									}
+									//String indexSymbol = indexEx.getContent();
+									//String valueSymbol = valueEx.getContent();
+									//if (indexSymbol.startsWith("v")||indexSymbol.startsWith("p"))
+									//{
+									Expression newIndexEx = symbolicContext.findValueOf(indexEx);
+									elementEx.remove(0);
+									elementEx.insert(newIndexEx, 0);
+									//}
+									//if (valueSymbol.startsWith("v")||valueSymbol.startsWith("p"))
+									//{
+									Expression newValueEx = symbolicContext.findValueOf(valueEx);
+									elementEx.remove(1);
+									elementEx.insert(newValueEx, 1);
+									//}
 								}
 							}
+							ArrayForYices aFY = new ArrayForYices(ex);
+							int index = -1;
+							for (int i = 0; i < symbolicContext.arrays.size(); i++)
+							{
+								if (symbolicContext.arrays.get(i).name.equals(aFY.name))
+								{
+									index = i;
+									break;
+								}
+							}
+							if (index > -1)
+								symbolicContext.arrays.remove(index);
+							symbolicContext.arrays.add(aFY);
 						}
 						else if (rightSymbol.equals("$array-length"))
 						{
@@ -411,19 +422,17 @@ public class SymbolicExecution {
 						/**
 						 * aget and aput might run into trouble if the
 						 * index variable is not a constant... 
+						 * 
+						 * Update(04/05/2015): Using (update) in Yices to represent arrays
+						 * The idea is to keep all assignment history recursively in one Yices statement 
 						 *  */
 						else if (rightSymbol.equals("$aget"))
 						{
 							String arrayName = s.getvB();
 							String indexS = s.getvC();
-							Register arrayReg = symbolicContext.findRegister(arrayName);
-							Expression arrayEx = (Expression) arrayReg.ex.getChildAt(1);
 							Register targetIndexReg = symbolicContext.findRegister(indexS);
 							Expression targetIndexEx = (Expression) targetIndexReg.ex.getChildAt(1);
-							right.removeAllChildren();
-							right.add(arrayEx.clone());
-							right.add(targetIndexEx.clone());
-							try // if the target index is not directly a number, we can't solve it
+/*							try // if the target index is not directly a number, we can't solve it
 							{
 								Integer targetIndex = Integer.parseInt(targetIndexEx.getContent());
 								if (arrayEx.getChildCount() > 2)
@@ -450,6 +459,15 @@ public class SymbolicExecution {
 								System.out.println("  " + s.getSmaliStmt());
 								System.out.println("  array: " + arrayEx.toYicesStatement());
 								System.out.println("  index: " + targetIndexEx.toYicesStatement());
+							}*/
+							for (ArrayForYices aFY : symbolicContext.arrays)
+							{
+								if (aFY.name.equals(arrayName))
+								{
+									ex.remove(1);
+									ex.insert(aFY.aget(targetIndexEx), 1);
+									break;
+								}
 							}
 						}
 						else if (rightSymbol.equals("$aput"))
@@ -457,11 +475,9 @@ public class SymbolicExecution {
 							updateRegs = false;
 							String arrayName = s.getvB();
 							String indexS = s.getvC();
-							Register arrayReg = symbolicContext.findRegister(arrayName);
-							Expression arrayEx = (Expression) arrayReg.ex.getChildAt(1);
 							Register targetIndexReg = symbolicContext.findRegister(indexS);
 							Expression targetIndexEx = (Expression) targetIndexReg.ex.getChildAt(1);
-							try // if the target index is not directly a number, we can't solve it
+/*							try // if the target index is not directly a number, we can't solve it
 							{
 								Integer targetIndex = Integer.parseInt(targetIndexEx.getContent());
 								if (arrayEx.getChildCount() > 2)
@@ -488,6 +504,14 @@ public class SymbolicExecution {
 								System.out.println("  " + s.getSmaliStmt());
 								System.out.println("  array: " + arrayEx.toYicesStatement());
 								System.out.println("  index: " + targetIndexEx.toYicesStatement());
+							}*/
+							for (ArrayForYices aFY : symbolicContext.arrays)
+							{
+								if (aFY.name.equals(arrayName))
+								{
+									aFY.aput(targetIndexEx, symbolicContext.findValueOf(left));
+									break;
+								}
 							}
 						}
 						/** update the object variable, then if the same field was assigned
@@ -807,6 +831,8 @@ public class SymbolicExecution {
 		ArrayList<Expression> outExs = new ArrayList<Expression>();
 		/** the most recent method invocation result */
 		Expression recentInvokeResult = null;
+		/** store all the array assignments of each array into one Expression */
+		ArrayList<ArrayForYices> arrays = new ArrayList<ArrayForYices>();
 		public Expression findValueOf(Expression theLeft)
 		{
 			if (theLeft.getContent().equals("$number"))
@@ -870,6 +896,7 @@ public class SymbolicExecution {
 	
 	private class Register {
 		String regName = "";
+		String type = "";
 		Expression ex = null;
 		ArrayList<Expression> fieldExs = new ArrayList<Expression>();
 		//boolean isFirstHalfOfWide = false;
