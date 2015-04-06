@@ -150,6 +150,11 @@ public class StaticClass implements Serializable {
 		return superClass;
 	}
 
+	public StaticClass getSuperClass(StaticApp staticApp)
+	{
+		return staticApp.findClassByJavaName(superClass);
+	}
+	
 	public void setSuperClass(String superClass) {
 		this.superClass = superClass;
 	}
@@ -179,6 +184,14 @@ public class StaticClass implements Serializable {
 	{
 		for (StaticMethod m : this.methods)
 			if (m.getSignature().equals(methodSignature))
+				return m;
+		return null;
+	}
+	
+	public StaticMethod getMethodBySubSig(String subSig)
+	{
+		for (StaticMethod m : this.methods)
+			if (m.getSubSignature().equals(subSig))
 				return m;
 		return null;
 	}

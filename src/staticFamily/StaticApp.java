@@ -118,27 +118,45 @@ public class StaticApp implements Serializable{
 	 * 	StaticApp
 	 *
 	 * Steps:
-	 * 	find StaticMethod from method signature. See which one of the 3 conditions it belong to:
+	 * 	find StaticMethod from method signature. See which one of the 4 conditions it belong to:
 	 * 		a) Static/private method. These 2 kinds of method can not be a virtual method
 	 * 		b) Abstract method. The method has to be located within the specific object type where the method is implemented
 	 * 		c) class name in methodSig NOT EQUALS type of $param0. The method is overriden, need to look for the right one based on the specific object type
-	 * 		d) class name in methodSig EQUALS type of $param0. then
+	 * 		d) class name in methodSig EQUALS type of $param0. If method body found, return that body; if not, then need to recursively look into super classes
 	 * */
 	public StaticMethod findDynamicDispatchedMethodBody(String methodSig, String param0Type)
 	{
-		StaticMethod m = findMethod(methodSig);
-		if (m == null || m.isStatic() || m.isPrivate())
-			return m;
+		/**
+		 * param0Type will be empty if target method is static
+		 * */
 		String classNameInSig = methodSig.substring(0, methodSig.indexOf("->"));
-		if (classNameInSig.equals(param0Type))
-		{
+		StaticMethod m = findMethod(methodSig);
+		if (param0Type.equals(""))
 			return m;
-		}
-		else
+		// case (a)
+		if (m != null && (m.isStatic() || m.isPrivate()))
+			return m;
+		// case (b)
+		if (m != null && m.isAbstract())
 		{
 			String newMethdSig = param0Type + methodSig.substring(methodSig.indexOf("->"));
 			return findMethod(newMethdSig);
 		}
+		// case (c)
+		if (!classNameInSig.equals(param0Type))
+		{
+			String newMethdSig = param0Type + methodSig.substring(methodSig.indexOf("->"));
+			return findMethod(newMethdSig);
+		}
+		// case (d)
+		StaticClass c = this.findClassByDexName(classNameInSig);
+		String subSig = methodSig.substring(methodSig.indexOf("->")+2);
+		while (m == null)
+		{
+			c = c.getSuperClass(this);
+			m = c.getMethodBySubSig(subSig);
+		}
+		return m;
 	}
 	
 }

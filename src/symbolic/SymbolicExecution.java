@@ -100,11 +100,8 @@ public class SymbolicExecution {
 			}
 			else if (s.invokesMethod())
 			{
-				String targetSig = (String)s.getData();
-				//TODO find the type of p0
-				StaticMethod targetM = staticApp.findDynamicDispatchedMethodBody(targetSig, "");
 				/**
-				 * TODO: this version didn't properly deal with inheritance
+				 *  This version didn't properly deal with inheritance
 				 * 	and interfacing. In order to properly deal with it,
 				 * 	need to:
 				 * 	1. maintain a virtual method table when parsing classes.
@@ -113,7 +110,35 @@ public class SymbolicExecution {
 				 * 	2. maintain a Type field for each register. So that when
 				 *  met a invoke-interface, we will know which implementation
 				 *  of the class to look for the method body.
+				 *  Update(04/06/2015): Maybe the solution doesn't need to be that all-around.
+				 *  Considering our situation, we are guaranteed to have the object type in the
+				 *  symbolic states. If the method sig matches the object type, then good.
 				 * */
+				String targetSig = (String)s.getData();
+				String p0Type = "";
+				Expression invokeEx = s.getExpression();
+				// find the type of p0
+				if (s.getSmaliStmt().startsWith("invoke-static")
+						|| s.getSmaliStmt().startsWith("invoke-super")
+						|| s.getSmaliStmt().startsWith("invoke-direct"))
+					p0Type = "";
+				// only need to worry about invoke-virtual and invoke-interface
+				else if (invokeEx.getChildCount() > 1)
+				{
+					Expression p0Ex = (Expression) invokeEx.getChildAt(1);
+					Expression p0ValueEx = symbolicContext.findValueOf(p0Ex);
+					if (p0ValueEx.getContent().equals("$new-instance")
+							|| p0ValueEx.getContent().equals("$Fstatic")
+							|| p0ValueEx.getContent().equals("$Finstance"))
+					{
+						Expression sigOrTypeEx = (Expression) p0ValueEx.getChildAt(0);
+						p0Type = sigOrTypeEx.getContent();
+						if (p0Type.contains(":"))
+							p0Type = p0Type.substring(p0Type.indexOf(":")+1);
+					}
+				}
+				//p0Type = "";
+				StaticMethod targetM = staticApp.findDynamicDispatchedMethodBody(targetSig, p0Type);
 				if (targetM != null && !targetM.isAbstract() && !(this.blackListOn && blacklistCheck(targetM)))
 				{
 					// First, initiate the subSymbolicContext by initiating
@@ -757,7 +782,6 @@ public class SymbolicExecution {
 		{
 			for (int i = 0; i < invokeEx.getChildCount()-1; i++)
 			{
-				
 				Register paramReg = new Register();
 				Expression paramEx = new Expression("=");
 				paramEx.add(new Expression("p"+i));
