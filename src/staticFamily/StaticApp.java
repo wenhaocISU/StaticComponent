@@ -156,6 +156,8 @@ public class StaticApp implements Serializable{
 		while (m == null)
 		{
 			c = c.getSuperClass(this);
+			if (c == null)
+				break;
 			m = c.getMethodBySubSig(subSig);
 		}
 		return m;
