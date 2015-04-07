@@ -788,7 +788,7 @@ public class SymbolicExecution {
 				String inputParamName = 
 						((Expression)invokeEx.getChildAt(i+1)).getContent();
 				Register theReg = symbolicContext.findRegister(inputParamName);
-				if (theReg.ex != null)
+				if (theReg.ex != null && theReg.ex.getChildCount() > 1)
 				{
 					Expression toPutIn = (Expression) theReg.ex.getChildAt(1);
 					paramEx.add(toPutIn.clone());
