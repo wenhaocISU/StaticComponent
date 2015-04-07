@@ -202,7 +202,7 @@ public class SymbolicExecution {
 				else
 				{
 					// TODO APIs?
-					Expression tempResultEx = new Expression("$tempResult");
+					Expression tempResultEx = new Expression("$api");
 					tempResultEx.add(new Expression(s.getSmaliStmt()));
 					symbolicContext.recentInvokeResult = tempResultEx;
 				}
