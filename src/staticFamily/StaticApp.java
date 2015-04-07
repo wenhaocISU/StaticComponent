@@ -150,6 +150,8 @@ public class StaticApp implements Serializable{
 		}
 		// case (d)
 		StaticClass c = this.findClassByDexName(classNameInSig);
+		if (c == null)
+			return null;
 		String subSig = methodSig.substring(methodSig.indexOf("->")+2);
 		while (m == null)
 		{
