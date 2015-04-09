@@ -1,7 +1,10 @@
 package symbolic;
  
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -213,16 +216,44 @@ public class Expression extends DefaultMutableTreeNode{
 	public static String createAssertion(String yices){
 		return "(assert "+yices+")";
 	}
-	
-	public String getYicesDefineStatement()
+	/**
+	 * Operators: 
+	 * 	
+	 * 
+	 * */
+	private static List<String> operators = new ArrayList<String>(Arrays.asList(
+			"add",
+			"sub",
+			"mul",
+			"div",
+			"",
+			"",
+			"",
+			""
+	));
+	public List<String> getYicesDefineStatements()
 	{
-		//TODO
-		return "";
+		List<String> results = new ArrayList<String>();
+		
+		if (getChildCount() > 0)
+		{
+			for (int i = 0; i < getChildCount(); i++)
+			{
+				Expression child = (Expression) getChildAt(i);
+				for (String childResult : child.getYicesDefineStatements())
+				{
+					if (!results.contains(childResult))
+						results.add(childResult);
+				}
+			}
+		}
+		return results;
 	}
 	
 	public String getYicesAssertionStatement()
 	{
 		//TODO
+		
 		return "";
 	}
 	
