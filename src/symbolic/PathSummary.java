@@ -2,6 +2,7 @@ package symbolic;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.List;
 
 public class PathSummary implements Serializable{
 
@@ -82,5 +83,5 @@ public class PathSummary implements Serializable{
 	public void setPathChoices(ArrayList<String> pathChoices) {
 		this.pathChoices = pathChoices;
 	}
-
+	
 }

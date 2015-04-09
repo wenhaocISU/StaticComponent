@@ -213,4 +213,17 @@ public class Expression extends DefaultMutableTreeNode{
 	public static String createAssertion(String yices){
 		return "(assert "+yices+")";
 	}
+	
+	public String getYicesDefineStatement()
+	{
+		//TODO
+		return "";
+	}
+	
+	public String getYicesAssertionStatement()
+	{
+		//TODO
+		return "";
+	}
+	
 }

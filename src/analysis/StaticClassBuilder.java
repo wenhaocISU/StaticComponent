@@ -662,7 +662,7 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 			String dec = "", type = "";
 			if (hex.contains("# "))	// double
 			{
-				dec = hex.substring(hex.indexOf(", ")+2);
+				dec = hex.substring(hex.indexOf("# ")+2);
 				hex = hex.substring(0, hex.indexOf(" "));
 				type = "double";
 			}
