@@ -157,6 +157,10 @@ public class SymbolicExecution {
 					//  3. the params that have fieldExs (from registers)
 					//  2. $Fstatic = ... (from outExs), also put the $Finstance 
 					//     into corresponding register
+					System.out.println("\nBefore merging (sub):\n");
+					subSymbolicContext.printAll();
+					System.out.println("\nBefore merging (main):\n");
+					symbolicContext.printAll();
 					for (Register subReg : subSymbolicContext.registers)
 					{
 						if (subReg.isReturnedVariable) // 1
@@ -177,7 +181,7 @@ public class SymbolicExecution {
 						// If it contains $Fstatic, update
 						// If it's $Finstance, but contains param's value, update
 						Expression theLeft = (Expression) subOutEx.getChildAt(0);
-						if (theLeft.contains("$Fstatic"))
+						if (theLeft.contains("$Fstatic") || theLeft.contains("$this"))
 						{
 							symbolicContext.updateOutExs(subOutEx);
 						}
@@ -191,13 +195,15 @@ public class SymbolicExecution {
 								Expression regValue = (Expression) reg.ex.getChildAt(1);
 								if (objValue.contains(regValue))
 								{
-									symbolicContext.updateOutExs(subOutEx);
-									updateFieldEx(reg, subOutEx);
+									symbolicContext.updateOutExs(subOutEx.clone());
+									updateFieldEx(reg, subOutEx.clone());
 									break;
 								}
 							}
 						}
 					}
+					System.out.println("\nAfter merging:\n");
+					symbolicContext.printAll();
 				}
 				else
 				{
@@ -641,7 +647,7 @@ public class SymbolicExecution {
 					Expression newEx = ex.clone();
 					left = (Expression) newEx.getChildAt(0);
 					Expression objValue = ((Expression) objReg.ex.getChildAt(1)).clone();
-					if (objReg.isParam)
+					if (objReg.isParam || objValue.contains("$this"))
 					{
 						left.remove(1);
 						left.insert(objValue, 1);
@@ -691,8 +697,8 @@ public class SymbolicExecution {
 			}
 			s = allStmts.get(nextStmtID);
 		}
-		if (inMainMethod)
-		//if (true)
+		//if (inMainMethod)
+		if (true)
 		{
 			pS.setSymbolicStates(symbolicContext.outExs);
 			if (this.debug)
