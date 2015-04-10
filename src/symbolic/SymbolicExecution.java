@@ -157,23 +157,40 @@ public class SymbolicExecution {
 					//  3. the params that have fieldExs (from registers)
 					//  2. $Fstatic = ... (from outExs), also put the $Finstance 
 					//     into corresponding register
-					System.out.println("\nBefore merging (sub):\n");
+					System.out.println("\nBefore merging (sub):" + targetM.getSignature() +"\n");
 					subSymbolicContext.printAll();
-					System.out.println("\nBefore merging (main):\n");
+					System.out.println("\nBefore merging (main):" + m.getSignature() + "\n");
 					symbolicContext.printAll();
 					for (Register subReg : subSymbolicContext.registers)
 					{
+						System.out.println("looking at sub register " + subReg.regName);
 						if (subReg.isReturnedVariable) // 1
 						{
+							System.out.println("[is return]");
 							Expression returnedEx = (Expression)subReg.ex.getChildAt(1);
 							symbolicContext.recentInvokeResult = returnedEx.clone();
 						}
 						if (subReg.isParam && subReg.fieldExs.size()>0) // 2
 						{ // find the original register, then update its fields
+							System.out.println("[is param]");
 							Register originalReg = symbolicContext.findRegister(
 									subReg.originalParamName);
+							System.out.println("[matched to main register " + originalReg.regName + "]");
+							System.out.println("  [before updating " + originalReg.regName + "]");
+							for (Expression e : originalReg.fieldExs)
+							{
+								System.out.println("    " + e.toYicesStatement());
+							}
 							for (Expression newFieldEx : subReg.fieldExs)
-								updateFieldEx(originalReg, newFieldEx);
+							{
+								System.out.println("    === adding in " + newFieldEx.toYicesStatement());
+								updateFieldEx(originalReg, newFieldEx.clone());
+							}
+							System.out.println("  [after updating " + originalReg.regName + "]");
+							for (Expression e : originalReg.fieldExs)
+							{
+								System.out.println("    " + e.toYicesStatement());
+							}
 						}
 					}
 					for (Expression subOutEx : subSymbolicContext.outExs) // 3
@@ -202,7 +219,7 @@ public class SymbolicExecution {
 							}
 						}
 					}
-					System.out.println("\nAfter merging:\n");
+					System.out.println("\nAfter merging:" + m.getSignature() + "\n");
 					symbolicContext.printAll();
 				}
 				else
@@ -639,11 +656,33 @@ public class SymbolicExecution {
 					Expression updatedRight = symbolicContext.findValueOf(right);
 					ex.remove(1);
 					ex.insert(updatedRight, 1);
-					// 2. add to reg's fieldExs
+					// 2. update this field in the object reg's fieldExs
 					String objName = ((Expression)left.getChildAt(1)).getContent();
 					Register objReg = symbolicContext.findRegister(objName);
 					updateFieldEx(objReg, ex);
-					// 3. maybe add it to outEx
+					// 3. also update all of right's fieldExs
+					for (Register rreg : symbolicContext.registers)
+					{
+						if (rreg.regName.equals(right.getContent()) && rreg.fieldExs.size()>0)
+						{
+							for (Expression childFieldEx : rreg.fieldExs)
+							{
+								if (childFieldEx.getChildCount() != 2)
+									continue;
+								Expression newChildFieldEx = childFieldEx.clone();
+								Expression newChildLeft = (Expression) newChildFieldEx.getChildAt(0);
+								Expression newChildRight = (Expression) newChildFieldEx.getChildAt(1);
+								newChildLeft.remove(1);
+								newChildLeft.add(left.clone());
+								updateFieldEx(objReg, newChildFieldEx.clone());
+								if (objReg.isParam || newChildRight.contains("$this"))
+								{
+									symbolicContext.updateOutExs(newChildFieldEx);
+								}
+							}
+						}
+					}
+					// 4. maybe add it to outEx
 					Expression newEx = ex.clone();
 					left = (Expression) newEx.getChildAt(0);
 					Expression objValue = ((Expression) objReg.ex.getChildAt(1)).clone();
@@ -697,8 +736,8 @@ public class SymbolicExecution {
 			}
 			s = allStmts.get(nextStmtID);
 		}
-		//if (inMainMethod)
-		if (true)
+		if (inMainMethod)
+		//if (true)
 		{
 			pS.setSymbolicStates(symbolicContext.outExs);
 			if (this.debug)
@@ -727,16 +766,47 @@ public class SymbolicExecution {
 
 	private void updateFieldEx(Register reg, Expression newFieldEx) {
 		Expression left = (Expression) newFieldEx.getChildAt(0);
+		Expression objValue = ((Expression) reg.ex.getChildAt(1)).clone();
+		Expression objEx = (Expression) left.getChildAt(1);
+		if (objEx.getContent().equals(reg.regName))
+		{
+			left.remove(1);
+			left.insert(objValue, 1);
+		}
 		String fieldSig = ((Expression) left.getChildAt(0)).getContent();
+		if (objEx.getContent().startsWith("$F"))
+		{
+			// This is a $Finstance of $Finstance/$Fstatic, we can
+			// just use the YicesStatement to compare
+			for (Expression fieldEx : reg.fieldExs)
+			{
+				Expression thisLeft = (Expression) fieldEx.getChildAt(0);
+				if (thisLeft.equals(left))
+				{
+					Expression newRight = (Expression) newFieldEx.getChildAt(1);
+					fieldEx.remove(1);
+					fieldEx.insert(newRight.clone(), 1);
+					return;
+				}
+			}
+		}
+		else
 		for (Expression fieldEx : reg.fieldExs)
 		{
 			Expression thisLeft = (Expression) fieldEx.getChildAt(0);
 			String thisFieldSig = ((Expression) thisLeft.getChildAt(0)).getContent();
+			Expression thisObjEx = (Expression) thisLeft.getChildAt(1);
 			if (thisFieldSig.equals(fieldSig))
 			{
+				if (thisObjEx.getContent().equals(reg.regName))
+				{
+					thisLeft.remove(1);
+					thisLeft.add(((Expression) reg.ex.getChildAt(1)).clone());
+				}
 				Expression newRight = (Expression) newFieldEx.getChildAt(1);
 				fieldEx.remove(1);
 				fieldEx.insert(newRight.clone(), 1);
+				
 				return;
 			}
 		}
@@ -832,7 +902,11 @@ public class SymbolicExecution {
 			Expression paramEx = new Expression("=");
 			paramEx.add(new Expression("p"+paramIndex));
 			if (paramIndex == 0 && !entryMethod.isStatic())
-				paramEx.add(new Expression("$this"));
+			{
+				Expression thisEx = new Expression("$this");
+				thisEx.add(new Expression(entryMethod.getDeclaringClass()));
+				paramEx.add(thisEx);
+			}
 			else
 				paramEx.add(new Expression("$p" + paramIndex));
 			Register paramReg = new Register();

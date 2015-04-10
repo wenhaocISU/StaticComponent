@@ -1,5 +1,6 @@
 package symbolic;
 
+
 public class ArrayForYices {
 
 	public String name = "";
