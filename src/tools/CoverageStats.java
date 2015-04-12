@@ -9,7 +9,7 @@ import staticFamily.StaticApp;
 import staticFamily.StaticClass;
 import staticFamily.StaticMethod;
 
-public class Zhen {
+public class CoverageStats {
 
 	/**
 	 * Return all the lines in the app that didn't get hit
@@ -17,7 +17,7 @@ public class Zhen {
 	 * 	Key set: Class name. Format example: com.example.fast
 	 * 	Value set: Missing lines within this class. Format is the same as the input Set<String> hitLines.
 	 * */
-	Map<String, Set<String>> getMissingLines(Set<String> hitLines, StaticApp staticApp)
+	public Map<String, Set<String>> getMissingLines(Set<String> hitLines, StaticApp staticApp)
 	{
 		Map<String, Set<String>> result = new HashMap<String, Set<String>>();
 		for (StaticClass c : staticApp.getClasses())
@@ -40,7 +40,7 @@ public class Zhen {
 	/**
 	 * Return all the lines in one method that aren't in 'lines'
 	 * */
-	Set<String> getMissingLines(Set<String> lines, StaticMethod m)
+	public Set<String> getMissingLines(Set<String> lines, StaticMethod m)
 	{
 		Set<String> result = new HashSet<String>();
 		String className = dexToJavaClassName(m.getDeclaringClass());
