@@ -7,6 +7,11 @@ public class ArrayForYices {
 	public String type = "";
 	private Expression arrayEx = null;
 	
+	public ArrayForYices()
+	{
+		
+	}
+	
 	public ArrayForYices(Expression ex)
 	{
 		Expression left = (Expression) ex.getChildAt(0);

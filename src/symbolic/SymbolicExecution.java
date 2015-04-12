@@ -480,43 +480,27 @@ public class SymbolicExecution {
 							String indexS = s.getvC();
 							Register targetIndexReg = symbolicContext.findRegister(indexS);
 							Expression targetIndexEx = (Expression) targetIndexReg.ex.getChildAt(1);
-/*							try // if the target index is not directly a number, we can't solve it
-							{
-								Integer targetIndex = Integer.parseInt(targetIndexEx.getContent());
-								if (arrayEx.getChildCount() > 2)
-								{
-									for (int i = 2; i < arrayEx.getChildCount(); i++)
-									{
-										Expression elementEx = (Expression) arrayEx.getChildAt(i);
-										Expression indexEx = (Expression) elementEx.getChildAt(0);
-										Expression valueEx = (Expression) elementEx.getChildAt(1);
-										String indexSymbol = indexEx.getContent();
-										Integer thisIndex = Integer.parseInt(indexSymbol);
-										if (thisIndex == targetIndex)
-										{
-											ex.remove(1);
-											ex.insert(valueEx.clone(), 1);
-											break;
-										}
-									}
-								}
-							}
-							catch (Exception e)
-							{
-								System.out.println("Can't solve aget:");
-								System.out.println("  " + s.getSmaliStmt());
-								System.out.println("  array: " + arrayEx.toYicesStatement());
-								System.out.println("  index: " + targetIndexEx.toYicesStatement());
-							}*/
+							boolean foundArray = false;
 							for (ArrayForYices aFY : symbolicContext.arrays)
 							{
+								System.out.println(aFY.name + " vs " + arrayName);
 								if (aFY.name.equals(arrayName))
 								{
+									foundArray = true;
 									ex.remove(1);
 									ex.insert(aFY.aget(targetIndexEx), 1);
 									break;
 								}
 							}
+							// if not found, then the array is initiated elsewhere
+							// find out what does the register points to, initiate that array
+							// TODO this is not the right way to solve, since it doesn't cumulate
+							// changes from outside of this method. Need to support it in the next version
+							if (!foundArray) 
+							{
+								System.out.println("Could not find the ArrayExpression " + arrayName);
+							}
+							System.out.println("[aget ex:] " + ex.toYicesStatement());
 						}
 						else if (rightSymbol.equals("$aput"))
 						{
@@ -525,41 +509,24 @@ public class SymbolicExecution {
 							String indexS = s.getvC();
 							Register targetIndexReg = symbolicContext.findRegister(indexS);
 							Expression targetIndexEx = (Expression) targetIndexReg.ex.getChildAt(1);
-/*							try // if the target index is not directly a number, we can't solve it
-							{
-								Integer targetIndex = Integer.parseInt(targetIndexEx.getContent());
-								if (arrayEx.getChildCount() > 2)
-								{
-									for (int i = 2; i < arrayEx.getChildCount(); i++)
-									{
-										Expression elementEx = (Expression) arrayEx.getChildAt(i);
-										Expression indexEx = (Expression) elementEx.getChildAt(0);
-										String indexSymbol = indexEx.getContent();
-										Integer thisIndex = Integer.parseInt(indexSymbol);
-										if (thisIndex == targetIndex)
-										{
-											Expression newElementEx = symbolicContext.findValueOf(left);
-											elementEx.remove(1);
-											elementEx.insert(newElementEx, 1);
-											break;
-										}
-									}
-								}
-							}
-							catch (Exception e)
-							{
-								System.out.println("Can't solve aput:");
-								System.out.println("  " + s.getSmaliStmt());
-								System.out.println("  array: " + arrayEx.toYicesStatement());
-								System.out.println("  index: " + targetIndexEx.toYicesStatement());
-							}*/
+							boolean foundArray = false;
 							for (ArrayForYices aFY : symbolicContext.arrays)
 							{
 								if (aFY.name.equals(arrayName))
 								{
+									foundArray = true;
 									aFY.aput(targetIndexEx, symbolicContext.findValueOf(left));
 									break;
 								}
+							}
+							if (!foundArray)
+							{
+								// if not found, then the array is initiated elsewhere
+								// find out what does the register points to, initiate that array
+								Expression theArrayName = symbolicContext.findValueOf(new Expression(arrayName));
+								Expression newArray = new Expression("$array");
+								newArray.add(new Expression("0"));
+								
 							}
 						}
 						/** update the object variable, then if the same field was assigned
@@ -1002,6 +969,7 @@ public class SymbolicExecution {
 		String regName = "";
 		String type = "";
 		Expression ex = null;
+		ArrayForYices aFY = null;
 		ArrayList<Expression> fieldExs = new ArrayList<Expression>();
 		//boolean isFirstHalfOfWide = false;
 		//boolean isSecondHalfOfWide = false;
