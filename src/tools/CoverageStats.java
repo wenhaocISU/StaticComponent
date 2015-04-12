@@ -8,6 +8,7 @@ import java.util.Set;
 import staticFamily.StaticApp;
 import staticFamily.StaticClass;
 import staticFamily.StaticMethod;
+import symbolic.Blacklist;
 
 public class CoverageStats {
 
@@ -22,6 +23,8 @@ public class CoverageStats {
 		Map<String, Set<String>> result = new HashMap<String, Set<String>>();
 		for (StaticClass c : staticApp.getClasses())
 		{
+			if (Blacklist.classInBlackList(c.getDexName()))
+				continue;
 			Set<String> missingLinesInClass = new HashSet<String>();
 			for (StaticMethod m : c.getMethods())
 			{
