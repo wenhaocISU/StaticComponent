@@ -97,10 +97,10 @@ public class Expression extends DefaultMutableTreeNode{
 			Expression expre = (Expression) this.getChildAt(i);
 			if(toReplace.equals(expre)){
 				this.remove(i);
-				this.insert(replacement, i);
+				this.insert(replacement.clone(), i);
 				anyChange = true;
 			}else{
-				anyChange = expre.replace(toReplace, replacement) || anyChange;
+				anyChange = expre.replace(toReplace, replacement.clone()) || anyChange;
 			}
 		}
 		return anyChange;

@@ -12,6 +12,7 @@ import symbolic.Blacklist;
 
 public class CoverageStats {
 
+	
 	/**
 	 * Return all the lines in the app that didn't get hit
 	 * The result format:
