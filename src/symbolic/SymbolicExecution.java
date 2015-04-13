@@ -157,39 +157,20 @@ public class SymbolicExecution {
 					//  3. the params that have fieldExs (from registers)
 					//  2. $Fstatic = ... (from outExs), also put the $Finstance 
 					//     into corresponding register
-					System.out.println("\nBefore merging (sub):" + targetM.getSignature() +"\n");
-					subSymbolicContext.printAll();
-					System.out.println("\nBefore merging (main):" + m.getSignature() + "\n");
-					symbolicContext.printAll();
 					for (Register subReg : subSymbolicContext.registers)
 					{
-						System.out.println("looking at sub register " + subReg.regName);
 						if (subReg.isReturnedVariable) // 1
 						{
-							System.out.println("[is return]");
 							Expression returnedEx = (Expression)subReg.ex.getChildAt(1);
 							symbolicContext.recentInvokeResult = returnedEx.clone();
 						}
 						if (subReg.isParam && subReg.fieldExs.size()>0) // 2
 						{ // find the original register, then update its fields
-							System.out.println("[is param]");
 							Register originalReg = symbolicContext.findRegister(
 									subReg.originalParamName);
-							System.out.println("[matched to main register " + originalReg.regName + "]");
-							System.out.println("  [before updating " + originalReg.regName + "]");
-							for (Expression e : originalReg.fieldExs)
-							{
-								System.out.println("    " + e.toYicesStatement());
-							}
 							for (Expression newFieldEx : subReg.fieldExs)
 							{
-								System.out.println("    === adding in " + newFieldEx.toYicesStatement());
 								updateFieldEx(originalReg, newFieldEx.clone());
-							}
-							System.out.println("  [after updating " + originalReg.regName + "]");
-							for (Expression e : originalReg.fieldExs)
-							{
-								System.out.println("    " + e.toYicesStatement());
 							}
 						}
 					}
@@ -219,8 +200,6 @@ public class SymbolicExecution {
 							}
 						}
 					}
-					System.out.println("\nAfter merging:" + m.getSignature() + "\n");
-					symbolicContext.printAll();
 				}
 				else
 				{
@@ -483,7 +462,6 @@ public class SymbolicExecution {
 							boolean foundArray = false;
 							for (ArrayForYices aFY : symbolicContext.arrays)
 							{
-								System.out.println(aFY.name + " vs " + arrayName);
 								if (aFY.name.equals(arrayName))
 								{
 									foundArray = true;
@@ -500,7 +478,6 @@ public class SymbolicExecution {
 							{
 								System.out.println("Could not find the ArrayExpression " + arrayName);
 							}
-							System.out.println("[aget ex:] " + ex.toYicesStatement());
 						}
 						else if (rightSymbol.equals("$aput"))
 						{
