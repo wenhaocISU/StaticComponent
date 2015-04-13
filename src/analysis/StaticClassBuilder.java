@@ -415,7 +415,6 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 						type = "short";
 						hex = line;
 						dec = Integer.parseInt(hex.replace("0x", "").replace("s", ""), 16) + "";
-						
 						break;
 					}
 					case 4: // int or float (distinguish by the # annotation)
@@ -424,7 +423,7 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 						{
 							type = "float";
 							hex = line.substring(0, line.indexOf(" "));
-							dec = line.substring(line.indexOf("# ")+2);
+							dec = line.substring(line.indexOf("# ")+2).replace("f", "");
 						}
 						else
 						{
