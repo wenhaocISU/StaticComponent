@@ -5,6 +5,7 @@ import java.util.Map;
 
 import staticFamily.StaticApp;
 import staticFamily.StaticClass;
+import staticFamily.StaticField;
 import staticFamily.StaticMethod;
 import staticFamily.StaticStmt;
 import analysis.Utility;
@@ -115,6 +116,7 @@ public class SymbolicExecution {
 				 *  symbolic states. If the method sig matches the object type, then good.
 				 * */
 				String targetSig = (String)s.getData();
+				String targetClass = targetSig.substring(0, targetSig.indexOf("->"));
 				String p0Type = "";
 				Expression invokeEx = s.getExpression();
 				// find the type of p0
@@ -137,9 +139,23 @@ public class SymbolicExecution {
 							p0Type = p0Type.substring(p0Type.indexOf(":")+1);
 					}
 				}
-				//p0Type = "";
 				StaticMethod targetM = staticApp.findDynamicDispatchedMethodBody(targetSig, p0Type);
-				if (targetM != null && !targetM.isAbstract() && !(this.blackListOn && blacklistCheck(targetM)))
+				// It could be enum's ordinal()I method
+				StaticClass targetC = staticApp.findClassByDexName(targetClass);
+				if (targetC != null && targetC.isEnum() && targetSig.endsWith("->ordinal()I"))
+				{
+					Map<String, Integer> enumMap = targetC.getEnumMap();
+					Expression paramEx = (Expression) invokeEx.getChildAt(1);
+					Expression fieldEx = symbolicContext.findValueOf(paramEx);
+					// Here I just assume the fieldEx is $Fstatic. Not bothering checking
+					Expression sigEx = (Expression) fieldEx.getChildAt(0);
+					String sig = sigEx.getContent();
+					String enumName = sig.substring(sig.indexOf("->")+2, sig.indexOf(":"));
+					int enumValue = enumMap.get(enumName);
+					Expression theResultEx = new Expression(enumValue + "");
+					symbolicContext.recentInvokeResult = theResultEx.clone();
+				}
+				else if (targetM != null && !targetM.isAbstract() && !(this.blackListOn && blacklistCheck(targetM)))
 				{
 					// First, initiate the subSymbolicContext by initiating
 					// parameter registers(different from entry method)

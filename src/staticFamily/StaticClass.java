@@ -2,7 +2,11 @@ package staticFamily;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
+import symbolic.Expression;
 
 public class StaticClass implements Serializable {
 
@@ -22,6 +26,8 @@ public class StaticClass implements Serializable {
 	
 	private boolean isInnerClass, isDefinedInsideMethod;
 	private boolean isActivity, isMainActivity;
+	
+	private Map<String, Integer> enumMap = null;
 	
 	public String getDeclaration() {
 		return declaration;
@@ -120,6 +126,56 @@ public class StaticClass implements Serializable {
 
 	public void setIsMainActivity(boolean isMainActivity) {
 		this.isMainActivity = isMainActivity;
+	}
+	
+	public boolean isEnum()
+	{
+		return declaration.contains(" enum ");
+	}
+	
+	public Map<String, Integer> getEnumMap()
+	{
+		if (!isEnum())
+			return null;
+		if (this.enumMap == null)
+		{
+			this.enumMap = new HashMap<String, Integer>();
+			StaticMethod clInitM = getMethod(getDexName() + "-><clinit>()V");
+			Map<String, Integer> valueMap = new HashMap<String, Integer>();
+			Map<String, String> fieldNameMap = new HashMap<String, String>();
+			for (StaticStmt s : clInitM.getSmaliStmts())
+			{
+				String stmt = s.getSmaliStmt();
+				if (stmt.startsWith("const-string"))
+				{
+					String variableName = stmt.substring(stmt.indexOf(" ")+1, stmt.indexOf(", "));
+					String fieldName = stmt.substring(stmt.indexOf(", ")+2).replace("\"", "");
+					fieldNameMap.put(variableName, fieldName);
+				}
+				else if (stmt.startsWith("const/4"))
+				{
+					String variableName = stmt.substring(stmt.indexOf(" ")+1, stmt.indexOf(", "));
+					String valueString = stmt.substring(stmt.indexOf(", ")+2);
+					int value = Integer.parseInt(valueString.replace("0x", ""), 16);
+					valueMap.put(variableName, value);
+				}
+				else if (stmt.startsWith("invoke-direct") && stmt.contains("<init>"))
+				{
+					Expression invokeEx = s.getExpression();
+					if (invokeEx.getChildCount() == 4)
+					{
+						Expression fieldVariableEx = (Expression) invokeEx.getChildAt(2);
+						Expression valueEx = (Expression) invokeEx.getChildAt(3);
+						String fieldV = fieldVariableEx.getContent();
+						String valueV = valueEx.getContent();
+						String fieldName = fieldNameMap.get(fieldV);
+						int value = valueMap.get(valueV);
+						enumMap.put(fieldName, value);
+					}
+				}
+			}
+		}
+		return enumMap;
 	}
 	
 	public boolean isPublic() {
