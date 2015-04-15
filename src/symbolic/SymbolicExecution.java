@@ -5,7 +5,6 @@ import java.util.Map;
 
 import staticFamily.StaticApp;
 import staticFamily.StaticClass;
-import staticFamily.StaticField;
 import staticFamily.StaticMethod;
 import staticFamily.StaticStmt;
 import analysis.Utility;
@@ -144,16 +143,25 @@ public class SymbolicExecution {
 				StaticClass targetC = staticApp.findClassByDexName(targetClass);
 				if (targetC != null && targetC.isEnum() && targetSig.endsWith("->ordinal()I"))
 				{
-					Map<String, Integer> enumMap = targetC.getEnumMap();
-					Expression paramEx = (Expression) invokeEx.getChildAt(1);
-					Expression fieldEx = symbolicContext.findValueOf(paramEx);
-					// Here I just assume the fieldEx is $Fstatic. Not bothering checking
-					Expression sigEx = (Expression) fieldEx.getChildAt(0);
-					String sig = sigEx.getContent();
-					String enumName = sig.substring(sig.indexOf("->")+2, sig.indexOf(":"));
-					int enumValue = enumMap.get(enumName);
-					Expression theResultEx = new Expression(enumValue + "");
-					symbolicContext.recentInvokeResult = theResultEx.clone();
+					try
+					{
+						Map<String, Integer> enumMap = targetC.getEnumMap();
+						Expression paramEx = (Expression) invokeEx.getChildAt(1);
+						Expression fieldEx = symbolicContext.findValueOf(paramEx);
+						// Here I just assume the fieldEx is $Fstatic. Not bothering checking
+						Expression sigEx = (Expression) fieldEx.getChildAt(0);
+						String sig = sigEx.getContent();
+						String enumName = sig.substring(sig.indexOf("->")+2, sig.indexOf(":"));
+						int enumValue = enumMap.get(enumName);
+						Expression theResultEx = new Expression(enumValue + "");
+						symbolicContext.recentInvokeResult = theResultEx.clone();
+					}
+					catch (Exception e)
+					{
+						Expression tempResultEx = new Expression("$api");
+						tempResultEx.add(new Expression(s.getSmaliStmt()));
+						symbolicContext.recentInvokeResult = tempResultEx;
+					}
 				}
 				else if (targetM != null && !targetM.isAbstract() && !(this.blackListOn && blacklistCheck(targetM)))
 				{
@@ -455,10 +463,19 @@ public class SymbolicExecution {
 						}
 						else if (rightSymbol.equals("$array-length"))
 						{
-							String arrayName = s.getvB();
-							Register reg = symbolicContext.findRegister(arrayName);
-							Expression arrayEx = (Expression) reg.ex.getChildAt(1);
-							Expression lengthEx = (Expression) arrayEx.getChildAt(0);
+							Expression lengthEx = null;
+							try	// If unexpected happens, assume the length is 0
+							{
+								String arrayName = s.getvB();
+								Register reg = symbolicContext.findRegister(arrayName);
+								Expression arrayEx = (Expression) reg.ex.getChildAt(1);
+								lengthEx = (Expression) arrayEx.getChildAt(0);
+
+							}
+							catch (Exception e)
+							{
+								lengthEx = new Expression("0");
+							}
 							ex.remove(1);
 							ex.insert(lengthEx.clone(), 1);
 						}
@@ -467,8 +484,14 @@ public class SymbolicExecution {
 						 * index variable is not a constant... 
 						 * 
 						 * Update(04/05/2015): Using (update) in Yices to represent arrays
-						 * The idea is to keep all assignment history recursively in one Yices statement 
-						 *  */
+						 * The idea is to keep all assignment history recursively in one Yices statement
+						 * 
+						 * Update(04/14/2015): Another problem came up. When two separate methods
+						 * write values into the same array, the solver has to be able to cumulate
+						 * that kind of array operation. Since PI meeting is coming up, we don't have
+						 * the time to implement array expression cumulation into the solver part.
+						 * Therefore, we still do not fully support arrays.
+						 **/
 						else if (rightSymbol.equals("$aget"))
 						{
 							String arrayName = s.getvB();
