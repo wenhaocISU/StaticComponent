@@ -445,7 +445,7 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 						{
 							type = "long";
 							hex = line;
-							dec = Long.parseLong(hex.replace("0x", "").replace("L", "")) + "";
+							dec = Long.parseLong(hex.replace("0x", "").replace("L", ""), 16) + "";
 						}
 						break;
 					}

@@ -753,28 +753,29 @@ public class SymbolicExecution {
 					String objName = ((Expression)left.getChildAt(1)).getContent();
 					Register objReg = symbolicContext.findRegister(objName);
 					updateFieldEx(objReg, ex);
-					// 3. also update all of right's fieldExs
-					for (Register rreg : symbolicContext.registers)
-					{
-						if (rreg.regName.equals(right.getContent()) && rreg.fieldExs.size()>0)
+					// 3. also update all of right's fieldExs. but be careful when overwriting the same register
+					if (!s.getvA().equals(s.getvB()))
+						for (Register rreg : symbolicContext.registers)
 						{
-							for (Expression childFieldEx : rreg.fieldExs)
+							if (rreg.regName.equals(right.getContent()) && rreg.fieldExs.size()>0)
 							{
-								if (childFieldEx.getChildCount() != 2)
-									continue;
-								Expression newChildFieldEx = childFieldEx.clone();
-								Expression newChildLeft = (Expression) newChildFieldEx.getChildAt(0);
-								Expression newChildRight = (Expression) newChildFieldEx.getChildAt(1);
-								newChildLeft.remove(1);
-								newChildLeft.add(left.clone());
-								updateFieldEx(objReg, newChildFieldEx.clone());
-								if (objReg.isParam || newChildRight.contains("$this"))
+								for (Expression childFieldEx : rreg.fieldExs)
 								{
-									symbolicContext.updateOutExs(newChildFieldEx);
+									if (childFieldEx.getChildCount() != 2)
+										continue;
+									Expression newChildFieldEx = childFieldEx.clone();
+									Expression newChildLeft = (Expression) newChildFieldEx.getChildAt(0);
+									Expression newChildRight = (Expression) newChildFieldEx.getChildAt(1);
+									newChildLeft.remove(1);
+									newChildLeft.add(left.clone());
+									updateFieldEx(objReg, newChildFieldEx.clone());
+									if (objReg.isParam || newChildRight.contains("$this"))
+									{
+										symbolicContext.updateOutExs(newChildFieldEx);
+									}
 								}
 							}
 						}
-					}
 					// 4. maybe add it to outEx
 					Expression newEx = ex.clone();
 					left = (Expression) newEx.getChildAt(0);
