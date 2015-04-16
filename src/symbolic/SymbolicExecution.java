@@ -916,9 +916,6 @@ public class SymbolicExecution {
 		while (!toDoPathList.isEmpty() && counter < maxPath)
 		{
 			System.out.println("[Symbolic Execution No." + counter++ + "] " + entryMethod.getSignature());
-			PrintWriter out = new PrintWriter(new FileWriter("/home/wenhaoc/SymExCount.log"));
-			out.write(counter);
-			out.close();
 			ToDoPath toDoPath = toDoPathList.remove(toDoPathList.size()-1);
 			PathSummary anotherPS = new PathSummary();
 			//anotherPS.setSymbolicStates(this.initSymbolicStates(entryMethod));
