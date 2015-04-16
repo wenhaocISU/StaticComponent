@@ -1,5 +1,7 @@
 package symbolic;
 
+import java.io.FileWriter;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -17,6 +19,7 @@ public class SymbolicExecution {
 	private ArrayList<PathSummary> pathSummaries;
 	private ArrayList<ToDoPath> toDoPathList = new ArrayList<ToDoPath>();
 	public static boolean doAPIs = false;
+	public static int maxPath = 2000;
 	
 	public SymbolicExecution(StaticApp staticApp) 
 	{
@@ -910,9 +913,12 @@ public class SymbolicExecution {
 	private void symbolicallyFinishingUp(StaticMethod entryMethod) throws Exception
 	{
 		int counter = 1;
-		while (!toDoPathList.isEmpty())
+		while (!toDoPathList.isEmpty() && counter < maxPath)
 		{
 			System.out.println("[Symbolic Execution No." + counter++ + "] " + entryMethod.getSignature());
+			PrintWriter out = new PrintWriter(new FileWriter("/home/wenhaoc/SymExCount.log"));
+			out.write(counter);
+			out.close();
 			ToDoPath toDoPath = toDoPathList.remove(toDoPathList.size()-1);
 			PathSummary anotherPS = new PathSummary();
 			//anotherPS.setSymbolicStates(this.initSymbolicStates(entryMethod));
