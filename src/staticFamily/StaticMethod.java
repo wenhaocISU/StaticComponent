@@ -154,6 +154,11 @@ public class StaticMethod implements Serializable {
 		return this.declaration.contains(" abstract ");
 	}
 	
+	public boolean isNative()
+	{
+		return this.declaration.contains(" native ");
+	}
+	
 	public boolean isPrivate()
 	{
 		return this.declaration.contains(" private ");

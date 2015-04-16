@@ -13,6 +13,8 @@ public class StaticApp implements Serializable{
 	private String packageName;
 	private String dataFolder;
 	
+	public boolean alreadyContainsLibraries = false;
+	
 	public List<StaticClass> getClasses() {
 		return classes;
 	}

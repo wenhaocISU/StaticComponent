@@ -783,10 +783,6 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 			{
 				ArrayList<String> eles = new ArrayList<String>();
 				eles.addAll(Arrays.asList(elements.split(", ")));
-				for (String ss : eles)
-				{
-					System.out.println("[ele]" + ss);
-				}
 				length = eles.size();
 				ex.add(new Expression(length + ""));
 				ex.add(new Expression(type));

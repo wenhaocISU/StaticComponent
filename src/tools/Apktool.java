@@ -7,11 +7,17 @@ import main.Paths;
 
 public class Apktool {
 
-	public static void extractAPK(String apkPath, String outDir)
+	public static void extractAPK(String apkPath, String outDir, boolean decodeRes)
 	{
-		String command = "java -jar " + Paths.apktoolPath
+		String command = 
+			decodeRes?
+				"java -jar " + Paths.apktoolPath
 						+ " d -f -o " + outDir
+						+ " " + apkPath
+			: 	"java -jar " + Paths.apktoolPath
+						+ " d -r -f -o " + outDir
 						+ " " + apkPath;
+		
 		System.out.println("Using Apktool to extract " + apkPath + "...");
 		try {
 			Process pc = Runtime.getRuntime().exec(command);

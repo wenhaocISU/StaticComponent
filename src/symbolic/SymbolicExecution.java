@@ -16,6 +16,7 @@ public class SymbolicExecution {
 	public boolean blackListOn = true;
 	private ArrayList<PathSummary> pathSummaries;
 	private ArrayList<ToDoPath> toDoPathList = new ArrayList<ToDoPath>();
+	public static boolean doAPIs = false;
 	
 	public SymbolicExecution(StaticApp staticApp) 
 	{
@@ -38,7 +39,7 @@ public class SymbolicExecution {
 			return pathSummaries;
 		}
 		System.out.println("Generating Symbolic PathSummaries for " + methodSignature);
-		try 
+		try
 		{
 			ToDoPath toDoPath = new ToDoPath();
 			PathSummary initPS = new PathSummary();
@@ -98,7 +99,112 @@ public class SymbolicExecution {
 				}
 				break;
 			}
-			else if (s.invokesMethod())
+			else if (s.invokesMethod() && doAPIs)
+			{
+				if (!staticApp.alreadyContainsLibraries)
+					APITest.loadInLibrary(staticApp);
+				String targetSig = (String)s.getData();
+				String p0Type = "";
+				Expression invokeEx = s.getExpression();
+				// find the type of p0
+				if (s.getSmaliStmt().startsWith("invoke-static")
+						|| s.getSmaliStmt().startsWith("invoke-super")
+						|| s.getSmaliStmt().startsWith("invoke-direct"))
+					p0Type = "";
+				else if (invokeEx.getChildCount() > 1)
+				{
+					Expression p0Ex = (Expression) invokeEx.getChildAt(1);
+					Expression p0ValueEx = symbolicContext.findValueOf(p0Ex);
+					if (p0ValueEx.getContent().equals("$new-instance")
+							|| p0ValueEx.getContent().equals("$Fstatic")
+							|| p0ValueEx.getContent().equals("$Finstance"))
+					{
+						Expression sigOrTypeEx = (Expression) p0ValueEx.getChildAt(0);
+						p0Type = sigOrTypeEx.getContent();
+						if (p0Type.contains(":"))
+							p0Type = p0Type.substring(p0Type.indexOf(":")+1);
+					}
+				}
+				StaticMethod targetM = staticApp.findDynamicDispatchedMethodBody(targetSig, p0Type);
+				if (targetM != null && !targetM.isAbstract() && !targetM.isNative() && !(this.blackListOn && blacklistCheck(targetM)))
+				{
+					System.out.println("  found method body " + targetM.getSignature());
+					// First, initiate the subSymbolicContext by initiating
+					// parameter registers(different from entry method)
+					// and local registers(same as entry method),
+					// then copy the outEx
+					SymbolicContext subSymbolicContext = 
+							initSymbolicContext(targetM, symbolicContext, s);
+					// Then recursively symbolicExecute the invoked method,
+					// update ExecutionLog and PathConditions into the same pS,
+					// update symbolic states in the sub symbolic context
+					// then merge into main context after the execution
+					symbolicExecution(pS, targetM, toDoPath, subSymbolicContext, false);
+					// Things to merge in:
+					//  1. the return variable (from registers)
+					//  3. the params that have fieldExs (from registers)
+					//  2. $Fstatic = ... (from outExs), also put the $Finstance 
+					//     into corresponding register
+					for (Register subReg : subSymbolicContext.registers)
+					{
+						if (subReg.isReturnedVariable) // 1
+						{
+							Expression returnedEx = (Expression)subReg.ex.getChildAt(1);
+							symbolicContext.recentInvokeResult = returnedEx.clone();
+						}
+						if (subReg.isParam && subReg.fieldExs.size()>0) // 2
+						{ // find the original register, then update its fields
+							Register originalReg = symbolicContext.findRegister(
+									subReg.originalParamName);
+							for (Expression newFieldEx : subReg.fieldExs)
+							{
+								updateFieldEx(originalReg, newFieldEx.clone());
+							}
+						}
+					}
+					for (Expression subOutEx : subSymbolicContext.outExs) // 3
+					{
+						// If it contains $Fstatic, update
+						// If it's $Finstance, but contains param's value, update
+						Expression theLeft = (Expression) subOutEx.getChildAt(0);
+						if (theLeft.contains("$Fstatic") || theLeft.contains("$this"))
+						{
+							symbolicContext.updateOutExs(subOutEx);
+						}
+						else
+						{
+							Expression objValue = (Expression) theLeft.getChildAt(1);
+							for (Register reg : symbolicContext.registers)
+							{
+								if (!reg.isParam)
+									continue;
+								Expression regValue = null;
+								try
+								{
+									regValue = (Expression) reg.ex.getChildAt(1);
+								} catch (Exception e)
+								{
+									regValue = new Expression("$unknown");
+								}
+								if (objValue.contains(regValue))
+								{
+									symbolicContext.updateOutExs(subOutEx.clone());
+									updateFieldEx(reg, subOutEx.clone());
+									break;
+								}
+							}
+						}
+					}
+				}
+				else
+				{
+					System.out.println("  didn't fine method body, creating a temp");
+					Expression tempResultEx = new Expression("$api");
+					tempResultEx.add(new Expression(s.getSmaliStmt()));
+					symbolicContext.recentInvokeResult = tempResultEx;
+				}
+			}
+			else if (s.invokesMethod() && !doAPIs)
 			{
 				/**
 				 *  This version didn't properly deal with inheritance
@@ -231,6 +337,7 @@ public class SymbolicExecution {
 					Expression tempResultEx = new Expression("$api");
 					tempResultEx.add(new Expression(s.getSmaliStmt()));
 					symbolicContext.recentInvokeResult = tempResultEx;
+					
 				}
 
 			}
@@ -394,7 +501,10 @@ public class SymbolicExecution {
 						if (rightSymbol.equals("$invokeResult"))
 						{
 							ex.remove(1);
+							if (symbolicContext.recentInvokeResult != null)
 							ex.insert(symbolicContext.recentInvokeResult.clone(), 1);
+							else
+								ex.insert(new Expression("$exceptioned"), 1);
 							symbolicContext.recentInvokeResult = null;
 						}
 						else if (rightSymbol.equals("$number"))
@@ -511,7 +621,7 @@ public class SymbolicExecution {
 							}
 							// if not found, then the array is initiated elsewhere
 							// find out what does the register points to, initiate that array
-							// TODO this is not the right way to solve, since it doesn't cumulate
+							// Note: this is not the right way to solve, since it doesn't cumulate
 							// changes from outside of this method. Need to support it in the next version
 							if (!foundArray) 
 							{

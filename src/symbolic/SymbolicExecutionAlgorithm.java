@@ -26,6 +26,7 @@ public class SymbolicExecutionAlgorithm {
  *  	{
  *  		// if returns register, mark that register
  *  		// end execution
+ *  		// TODO mark throw, if there's return point, terminate that method or see if that method handles exception
  *  		break;
  *  	}
  *  	else if (s.invokesMethod())

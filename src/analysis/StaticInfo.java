@@ -27,6 +27,8 @@ import tools.Jarsigner;
 public class StaticInfo {
 
 	public static boolean instrumentApps = true;
+	public static boolean decodeRes = true;
+	public static boolean parseManifest = true;
 	
 	public static StaticApp initAnalysis(String apkPath, boolean forceBuild)
 	{
@@ -87,7 +89,7 @@ public class StaticInfo {
 		// Step 1
 		String apkPath = staticApp.getApkPath();
 		String outDir = staticApp.getDataFolder() + "/apktool/";
-		Apktool.extractAPK(apkPath, outDir);
+		Apktool.extractAPK(apkPath, outDir, decodeRes);
 		// Step 2
 		File smaliFolder = new File(staticApp.getDataFolder() + "/apktool/smali");
 		initClassBuilders(staticApp, smaliFolder);
@@ -150,7 +152,8 @@ public class StaticInfo {
 */
 		}
 		// Step 4
-		parseManifest(staticApp);
+		if (parseManifest)
+			parseManifest(staticApp);
 	}
 
 	private static void initClassBuilders(StaticApp staticApp, File smaliFile)
