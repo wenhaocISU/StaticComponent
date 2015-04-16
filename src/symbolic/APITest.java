@@ -6,8 +6,8 @@ import analysis.StaticInfo;
 
 public class APITest {
 
-	private static String frameworkAPKPath = "libs/framework.apk";
-	private static String otherAPKPath = "libs/others.apk";
+	private static String frameworkAPKPath = "/home/wenhaoc/git/StaticComponent/libs/framework.apk";
+	private static String otherAPKPath = "/home/wenhaoc/git/StaticComponent/libs/others.apk";
 	
 	public static void loadInLibrary(StaticApp staticApp)
 	{
