@@ -254,12 +254,26 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 							String line3 = "    invoke-virtual {v" + outVNo + ", v" + stringVNo + "}, Ljava/io/PrintStream;->println(Ljava/lang/String;)V";
 							int insertLocation = index - 1;
 							String tempLine = smaliCode.get(insertLocation);
+							boolean moveLabel = false;
+							String labelLine = smaliCode.get(insertLocation-1);
+							if (labelLine.startsWith("    :"))
+							{
+								moveLabel = true;
+								smaliCode.remove(insertLocation-1);
+								index--;
+								insertLocation--;
+							}
 							while (!tempLine.equals(""))
 								tempLine = smaliCode.get(--insertLocation);
 							smaliCode.add(insertLocation+1, "");
 							smaliCode.add(insertLocation+1, line3);
 							smaliCode.add(insertLocation+1, line2);
 							smaliCode.add(insertLocation+1, line1);
+							if (moveLabel)
+							{
+								smaliCode.add(insertLocation+1, labelLine);
+								index++;
+							}
 							index += 4;
 							if (stringVNo >= m.getLocalVariableCount())
 							{
