@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import analysis.Utility;
 import symbolic.Blacklist;
 
 public class StaticApp implements Serializable{
@@ -115,6 +116,11 @@ public class StaticApp implements Serializable{
 			if (c.isMainActivity())
 				return c;
 		return null;
+	}
+	
+	public boolean classBelongToModelDex(String c)
+	{
+		return this.phantomClasses.contains(Utility.javaToDexTypeName(c));
 	}
 	
 	public boolean methodBelongToModelDex(StaticMethod m)
