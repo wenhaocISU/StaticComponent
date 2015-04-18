@@ -41,6 +41,28 @@ public class CoverageStats {
 		return result;
 	}
 	
+	public Set<String> getMissingLinesInASet(Set<String> hitLines, StaticApp staticApp)
+	{
+		Set<String> result = new HashSet<String>();
+		for (StaticClass c : staticApp.getClasses())
+		{
+			if (Blacklist.classInBlackList(c.getDexName()))
+				continue;
+			for (StaticMethod m : c.getMethods())
+			{
+				for (int i : m.getSourceLineNumbers())
+				{
+					String thisLine = c.getJavaName() + ":" + i;
+					System.out.println("comparing  " + thisLine);
+					if (!hitLines.contains(thisLine))
+						result.add(thisLine);
+				}
+			}
+		}
+		return result;
+	}
+	
+	
 	/**
 	 * Return all the lines in one method that aren't in 'lines'
 	 * */

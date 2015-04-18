@@ -4,6 +4,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import symbolic.Blacklist;
+
 public class StaticApp implements Serializable{
 
 	private static final long serialVersionUID = 1L;
@@ -112,6 +114,19 @@ public class StaticApp implements Serializable{
 			if (c.isMainActivity())
 				return c;
 		return null;
+	}
+	
+	public int getBytecodeLineCount()
+	{
+		int result = 0;
+		for (StaticClass c : classes)
+		{
+			if (Blacklist.classInBlackList(c.getDexName()))
+				continue;
+			for (StaticMethod m : c.getMethods())
+				result += m.getSourceLineNumbers().size();
+		}
+		return result;
 	}
 	
 	/**
