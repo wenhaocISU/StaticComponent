@@ -14,6 +14,7 @@ public class StaticApp implements Serializable{
 	private String apkPath;
 	private String packageName;
 	private String dataFolder;
+	public List<String> phantomClasses = new ArrayList<String>();
 	
 	public boolean alreadyContainsLibraries = false;
 	
@@ -114,6 +115,19 @@ public class StaticApp implements Serializable{
 			if (c.isMainActivity())
 				return c;
 		return null;
+	}
+	
+	public boolean methodBelongToModelDex(StaticMethod m)
+	{
+		StaticClass c = m.getDeclaringClass(this);
+		return classBelongToModelDex(c);
+	}
+	
+	public boolean classBelongToModelDex(StaticClass c)
+	{
+		if (c == null)
+			return false;
+		return this.phantomClasses.contains(c.getDexName());
 	}
 	
 	public int getBytecodeLineCount()

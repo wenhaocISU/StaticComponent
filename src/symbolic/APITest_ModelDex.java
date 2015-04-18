@@ -26,12 +26,13 @@ public class APITest_ModelDex {
 			StaticApp f = StaticInfo.initAnalysis(modelDex.getAbsolutePath(), true);
 			for (StaticClass c : f.getClasses())
 			{
-				System.out.println("  [class]" + c.getDexName());
+				if (!c.getDexName().equals("Ljava/util/ArrayList;"))
+					continue;
 				staticApp.addClass(c);
+				staticApp.phantomClasses.add(c.getDexName());
 			}
 		}
 		staticApp.alreadyContainsLibraries = true;
-		
 		StaticInfo.decodeRes = true;
 		StaticInfo.instrumentApps = true;
 		StaticInfo.parseManifest = true;
