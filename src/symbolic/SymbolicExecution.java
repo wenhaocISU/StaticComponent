@@ -153,6 +153,7 @@ public class SymbolicExecution {
 					{
 						if (subReg.isReturnedVariable) // 1
 						{
+							//TODO if return is an object, the FieldEx should also be reported
 							Expression returnedEx = (Expression)subReg.ex.getChildAt(1);
 							symbolicContext.recentInvokeResult = returnedEx.clone();
 						}
@@ -162,6 +163,7 @@ public class SymbolicExecution {
 									subReg.originalParamName);
 							for (Expression newFieldEx : subReg.fieldExs)
 							{
+								System.out.println("updating fieldEx [" + subReg.regName + "]: " + newFieldEx.toYicesStatement());
 								updateFieldEx(originalReg, newFieldEx.clone());
 							}
 						}
@@ -588,6 +590,7 @@ public class SymbolicExecution {
 			else if (s.updatesSymbolicStates())
 			{
 				boolean updateRegs = true;
+				boolean igetObject = false;
 				Expression ex = s.getExpression().clone();
 				Expression left = (Expression) ex.getChildAt(0);
 				Expression right = (Expression) ex.getChildAt(1);
@@ -769,6 +772,7 @@ public class SymbolicExecution {
 						 *  */
 						else if (rightSymbol.equals("$Finstance"))
 						{
+							igetObject = true;
 							Expression fieldSigEx = (Expression) right.getChildAt(0);
 							Expression objEx = (Expression) right.getChildAt(1);
 							Register objReg = symbolicContext.findRegister(objEx.getContent());
@@ -840,6 +844,22 @@ public class SymbolicExecution {
 							{
 								reg.ex = ex;
 								reg.fieldExs.clear();
+								Expression exRight = (Expression) ex.getChildAt(1);
+								if (igetObject)
+								{
+									for (Expression outEx : symbolicContext.outExs)
+									{
+										Expression leftOutEx = (Expression) outEx.getChildAt(0);
+										if (leftOutEx.getContent().equals("$Finstance"))
+										{
+											Expression objOutEx = (Expression) leftOutEx.getChildAt(1);
+											if (objOutEx.contains(exRight))
+											{
+												reg.fieldExs.add(outEx.clone());
+											}
+										}
+									}
+								}
 								break;
 							}
 						}
