@@ -1,4 +1,4 @@
-package tools;
+/*package tools;
 
 import java.io.File;
 import java.util.Map;
@@ -38,10 +38,11 @@ public class SootTemplate {
 				"-force-android-jar", Paths.androidJarPath,
 				"-process-path", file.getAbsolutePath() 
 		};
-		/**Uncomment the following 2 lines if doing instrumentation */
+		*//**Uncomment the following 2 lines if doing instrumentation *//*
 		//Scene.v().addBasicClass("java.io.PrintStream", SootClass.SIGNATURES);
 		//Scene.v().addBasicClass("java.lang.System", SootClass.SIGNATURES);
 		soot.Main.main(args);
 		soot.G.reset();
 	}
 }
+*/
