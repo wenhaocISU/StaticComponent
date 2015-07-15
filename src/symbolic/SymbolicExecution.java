@@ -1,7 +1,5 @@
 package symbolic;
 
-import java.io.FileWriter;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -748,7 +746,10 @@ public class SymbolicExecution {
 							Register targetIndexReg = symbolicContext.findRegister(indexS);
 							Expression targetIndexEx = (Expression) targetIndexReg.ex.getChildAt(1);
 							boolean foundArray = false;
-							for (ArrayForYices aFY : symbolicContext.arrays)
+							// Two things can happen here: 
+							// 1. this array is initiated in current context, then it can be found within the 'symbolicContext.arrays'
+							// 2. this array is initiated outside of current context, then it should be a field, we need to look for its value? (TODO) maybe its value should also be seen when it was iget'd.
+							for (ArrayForYices aFY : symbolicContext.arrays)	// case 1
 							{
 								if (aFY.name.equals(arrayName))
 								{
@@ -757,10 +758,11 @@ public class SymbolicExecution {
 									break;
 								}
 							}
-							if (!foundArray)
+							if (!foundArray)	// case 2
 							{
 								// if not found, then the array is initiated elsewhere
 								// find out what does the register points to, initiate that array
+								// then do aput, and update that field if neccessary
 								Expression theArrayName = symbolicContext.findValueOf(new Expression(arrayName));
 								Expression newArray = new Expression("$array");
 								newArray.add(new Expression("0"));
@@ -768,7 +770,8 @@ public class SymbolicExecution {
 							}
 						}
 						/** update the object variable, then if the same field was assigned
-						 *  previously, copy that value
+						 *  previously, copy that value;
+						 *  TODO: if the field is an array and it was not assigned previously, it could still have an initial value. Goto the init and clinit, maybe copy that value??
 						 *  */
 						else if (rightSymbol.equals("$Finstance"))
 						{
@@ -779,6 +782,7 @@ public class SymbolicExecution {
 							Expression newObjEx = symbolicContext.findValueOf(objEx);
 							right.remove(1);
 							right.insert(newObjEx, 1);
+							boolean foundInitValue = false;
 							for (Expression fieldEx : objReg.fieldExs)
 							{
 								Expression thisFieldSigEx =(Expression)((Expression) fieldEx.getChildAt(0)).getChildAt(0);
@@ -787,7 +791,29 @@ public class SymbolicExecution {
 									Expression newRight = ((Expression) fieldEx.getChildAt(1)).clone();
 									ex.remove(1);
 									ex.insert(newRight, 1);
+									foundInitValue = true;
 									break;
+								}
+							}
+							String fieldSig = ((Expression)right.getChildAt(0)).getContent();
+							if (!foundInitValue && fieldSig.contains("["))
+							{
+								//TODO look into the init and clinit
+								// if there is initiation, replace ex.child(1) with new value
+								// also put the assignment into the object's outExs
+								
+								FieldInitializer finit = new FieldInitializer(right, fieldSig, (byte) 'i', staticApp);
+								Expression newRight = finit.findFieldInitValue();
+								if (newRight != null)
+								{
+									ex.remove(1);
+									ex.insert(newRight, 1);
+									System.out.println("[UPDATED]" + ex.toYicesStatement());
+									Expression newFieldEx = new Expression("=");
+									newFieldEx.add(right.clone());
+									newFieldEx.add(newRight.clone());
+									objReg.fieldExs.add(newFieldEx.clone());
+									symbolicContext.outExs.add(newFieldEx);
 								}
 							}
 						}
@@ -797,6 +823,7 @@ public class SymbolicExecution {
 						else if (rightSymbol.equals("$Fstatic"))
 						{
 							//System.out.println("[1]"+ex.toYicesStatement());
+							boolean foundInitValue = false;
 							for (Expression outEx : symbolicContext.outExs)
 							{
 								Expression fieldEx = (Expression) outEx.getChildAt(0);
@@ -806,8 +833,27 @@ public class SymbolicExecution {
 									Expression thisValue = ((Expression) outEx.getChildAt(1)).clone();
 									ex.remove(1);
 									ex.insert(thisValue, 1);
+									foundInitValue = true;
 									//System.out.println("[3]" + ex.toYicesStatement());
 									break;
+								}
+							}
+							String fieldSig = ((Expression)right.getChildAt(0)).getContent();
+							if (!foundInitValue && fieldSig.contains("["))
+							{
+								//look into the init and clinit
+								// if there is initiation, then replace ex.child(1) with new value.
+								// also need to put the field assignment in the context
+								FieldInitializer finit = new FieldInitializer(right, fieldSig, (byte) 'i', staticApp);
+								Expression newRight = finit.findFieldInitValue();
+								if (newRight != null)
+								{
+									ex.remove(1);
+									ex.insert(newRight, 1);
+									Expression newFieldEx = new Expression("=");
+									newFieldEx.add(right.clone());
+									newFieldEx.add(newRight.clone());
+									symbolicContext.outExs.add(newFieldEx);
 								}
 							}
 						}
@@ -836,14 +882,16 @@ public class SymbolicExecution {
 					   register and the paramRegister. So no extra action
 					   needed here.
 					*/
-					if (updateRegs) // no need for aput
+					if (updateRegs) // no need for aput TODO: WHY no need for aput? 
+									// Because there is no assignment i.e. left = right. What "aput" does is update the array content, which strictly is not an register assignment
 					{
 						for (Register reg : symbolicContext.registers)
 						{
 							if (reg.regName.equals(leftSymbol))
 							{
-								reg.ex = ex;
+								reg.ex = ex.clone();
 								reg.fieldExs.clear();
+								System.out.println("[HERE]" + ex.toYicesStatement());
 								Expression exRight = (Expression) ex.getChildAt(1);
 								if (igetObject)
 								{
