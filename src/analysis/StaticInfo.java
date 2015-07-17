@@ -107,6 +107,7 @@ public class StaticInfo {
 			}
 		}
 		executor.shutdown();
+		classBuilders.clear();
 		// Step 3
 		for (StaticClass c : staticApp.getClasses())
 		{
