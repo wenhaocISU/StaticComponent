@@ -6,6 +6,8 @@ public class ArrayForYices {
 	public String name = "";
 	public String type = "";
 	private Expression arrayEx = null;
+	public boolean isField = false;
+	public Expression fieldEx = null;
 	
 	public ArrayForYices()
 	{
@@ -32,6 +34,10 @@ public class ArrayForYices {
 		}
 	}
  
+	public Expression getArrayExpression()
+	{
+		return arrayEx;
+	}
 	
 	private void initArray()
 	{
@@ -58,6 +64,11 @@ public class ArrayForYices {
 		newArrayEx.add(realIndexEx);
 		newArrayEx.add(valueEx.clone());
 		arrayEx = newArrayEx.clone();
+	}
+	
+	public String toYicesStatement()
+	{
+		return arrayEx.toYicesStatement();
 	}
 	
 }

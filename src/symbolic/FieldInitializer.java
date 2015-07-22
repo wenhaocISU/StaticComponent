@@ -43,6 +43,7 @@ public class FieldInitializer {
 		if (m == null)
 			return null;
 		SymbolicExecution sex = new SymbolicExecution(staticApp);
+		sex.debug = false;
 		ArrayList<PathSummary> psList = sex.doFullSymbolic(m.getSignature());
 		if (psList.size() < 1)
 			return null;

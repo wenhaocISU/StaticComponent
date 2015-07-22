@@ -754,7 +754,18 @@ public class SymbolicExecution {
 								if (aFY.name.equals(arrayName))
 								{
 									foundArray = true;
+									System.out.println("[BEFORE]" + aFY.toYicesStatement());
 									aFY.aput(targetIndexEx, symbolicContext.findValueOf(left));
+									System.out.println("[AFTER ]" + aFY.toYicesStatement());
+									//TODO if the array is also a field, then we need to update the corresponding field value
+									// because there won't be an iput/sput in the code
+									if (aFY.isField)
+									{
+										Expression fieldArrayEx = new Expression("=");
+										fieldArrayEx.add(aFY.fieldEx.clone());
+										fieldArrayEx.add(aFY.getArrayExpression().clone());
+										symbolicContext.updateOutExs(fieldArrayEx);
+									}
 									break;
 								}
 							}
@@ -808,12 +819,16 @@ public class SymbolicExecution {
 								{
 									ex.remove(1);
 									ex.insert(newRight, 1);
-									System.out.println("[UPDATED]" + ex.toYicesStatement());
+									//System.out.println("[UPDATED]" + ex.toYicesStatement());
 									Expression newFieldEx = new Expression("=");
 									newFieldEx.add(right.clone());
 									newFieldEx.add(newRight.clone());
 									objReg.fieldExs.add(newFieldEx.clone());
 									symbolicContext.outExs.add(newFieldEx);
+									ArrayForYices aFY = new ArrayForYices(ex.clone());
+									aFY.isField = true;
+									aFY.fieldEx = right.clone();
+									symbolicContext.arrays.add(aFY);			
 								}
 							}
 						}
@@ -854,6 +869,10 @@ public class SymbolicExecution {
 									newFieldEx.add(right.clone());
 									newFieldEx.add(newRight.clone());
 									symbolicContext.outExs.add(newFieldEx);
+									ArrayForYices aFY = new ArrayForYices(ex.clone());
+									aFY.isField = true;
+									aFY.fieldEx = right.clone();
+									symbolicContext.arrays.add(aFY);
 								}
 							}
 						}
@@ -891,7 +910,7 @@ public class SymbolicExecution {
 							{
 								reg.ex = ex.clone();
 								reg.fieldExs.clear();
-								System.out.println("[HERE]" + ex.toYicesStatement());
+								//System.out.println("[HERE]" + ex.toYicesStatement());
 								Expression exRight = (Expression) ex.getChildAt(1);
 								if (igetObject)
 								{
