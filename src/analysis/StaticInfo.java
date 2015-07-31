@@ -222,12 +222,15 @@ public class StaticInfo {
 				Node a = aList.item(i);
 				String aName = a.getAttributes().getNamedItem("android:name").getNodeValue();
 				if (aName.startsWith("."))
-					aName = aName.substring(1, aName.length());
+					aName = pkgName + aName;
 				if (!aName.contains("."))
 					aName = pkgName + "." + aName;
 				StaticClass c = staticApp.findClassByJavaName(aName);
 				if (c == null)
+				{
+					System.out.println("[WARNING] Could not find activity class " + aName);
 					continue;
+				}
 				c.setIsActivity(true);
 				Element e = (Element) a;
 				NodeList actions = e.getElementsByTagName("action");
