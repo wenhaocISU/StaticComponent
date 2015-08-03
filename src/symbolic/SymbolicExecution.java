@@ -475,7 +475,6 @@ public class SymbolicExecution {
 					}
 					System.out.println("[Aug3]" + tempResultEx.toYicesStatement());
 					symbolicContext.recentInvokeResult = tempResultEx;
-					
 				}
 
 			}
@@ -861,7 +860,7 @@ public class SymbolicExecution {
 								}
 							}
 						}
-						/** see if the field was previously assigned, copy that value
+						/** see if the field was previously assigned, copy that value;
 						 *  otherwise, no changes
 						 * */
 						else if (rightSymbol.equals("$Fstatic"))
