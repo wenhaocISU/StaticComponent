@@ -101,6 +101,12 @@ public class SymbolicExecution {
 				}
 				break;
 			}
+			/**
+			 * Three ways of dealing with method invocation:
+			 * 1. Use API model
+			 * 2. Use API original dex
+			 * 3. Ignore API
+			 * */
 			else if (s.invokesMethod() && useAPIModels)
 			{
 				if (!staticApp.alreadyContainsLibraries)
@@ -108,7 +114,8 @@ public class SymbolicExecution {
 				String targetSig = (String)s.getData();
 				String p0Type = "";
 				Expression invokeEx = s.getExpression();
-				// find the type of p0
+				
+				// Invoke(1) - find the type of p0: (a) Non-existing. (b) $this
 				if (s.getSmaliStmt().startsWith("invoke-static")
 						|| s.getSmaliStmt().startsWith("invoke-super")
 						|| s.getSmaliStmt().startsWith("invoke-direct"))
@@ -127,6 +134,9 @@ public class SymbolicExecution {
 							p0Type = p0Type.substring(p0Type.indexOf(":")+1);
 					}
 				}
+				// Invoke(2) - try to perform symbolic execution in nested method
+				//				(a). method body found in original dex
+				//				(b). 
 				StaticMethod targetM = staticApp.findDynamicDispatchedMethodBody(targetSig, p0Type);
 				if (targetM != null && !targetM.isAbstract() && !targetM.isNative() && !(this.blackListOn && blacklistCheck(targetM)))
 				{
@@ -208,6 +218,8 @@ public class SymbolicExecution {
 					symbolicContext.recentInvokeResult = tempResultEx;
 				}
 			}
+			// brute force API dex so that nested method body will always be found
+			// (Highly inefficient because API classes are COMPLICATED)
 			else if (s.invokesMethod() && doAPIs)
 			{
 				if (!staticApp.alreadyContainsLibraries)
@@ -445,6 +457,23 @@ public class SymbolicExecution {
 					// TODO APIs?
 					Expression tempResultEx = new Expression("$api");
 					tempResultEx.add(new Expression(s.getSmaliStmt()));
+					// Temp Invoke Expression Format:
+					// root - invoke statement
+					// children - Expression of each children in order
+					Expression invokeStmtEx = s.getExpression();
+					if (invokeStmtEx.getChildCount() > 1)
+					{
+						for (int i = 1; i < invokeStmtEx.getChildCount(); i++)
+						{
+							Expression paramEx = (Expression) invokeStmtEx.getChildAt(i);
+							Expression paramValueEx = symbolicContext.findValueOf(paramEx);
+							if (!paramEx.equals(paramValueEx))
+							{
+								tempResultEx.add(paramValueEx);
+							}
+						}
+					}
+					System.out.println("[Aug3]" + tempResultEx.toYicesStatement());
 					symbolicContext.recentInvokeResult = tempResultEx;
 					
 				}
