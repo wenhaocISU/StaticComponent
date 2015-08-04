@@ -589,6 +589,9 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 			Expression ex = new Expression("=");
 			ex.add(new Expression(vA));
 			Expression resultEx;
+			// move-result either follows "filled-new-arary" or "invoke..."
+			// result is already there for "filled-new-array"
+			// result of "invoke" requires symbolic execution
 			if (methodContext.resultExpression != null)
 			{
 				resultEx = methodContext.resultExpression.clone();
@@ -765,7 +768,7 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 			ex.add(opEx);
 			s.setExpression(ex);
 		}
-		/** new array vA, vB, type@CCCC */
+		/** new-array vA, vB, type@CCCC */
 		else if (stmtIndex == 35)
 		{
 			String vs[] = line.substring(line.indexOf(" " )+1).split(", ");
