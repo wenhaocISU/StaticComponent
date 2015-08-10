@@ -6,6 +6,7 @@ public class ArrayForYices {
 	public String name = "";
 	public String type = "";
 	private Expression arrayEx = null;
+	private Expression lengthEx = null;
 	public boolean isField = false;
 	public Expression fieldEx = null;
 	
@@ -19,6 +20,7 @@ public class ArrayForYices {
 		Expression left = (Expression) ex.getChildAt(0);
 		this.name = left.getContent();
 		Expression arrayEx = (Expression) ex.getChildAt(1);
+		this.lengthEx = ((Expression) arrayEx.getChildAt(0)).clone();
 		Expression typeEx = (Expression) arrayEx.getChildAt(1);
 		this.type = typeEx.getContent();
 		initArray();
@@ -42,7 +44,7 @@ public class ArrayForYices {
 	private void initArray()
 	{
 		arrayEx = new Expression("$array");
-		arrayEx.add(new Expression(name));
+		arrayEx.add(lengthEx);
 		arrayEx.add(new Expression(type));
 	}
 	
@@ -64,6 +66,11 @@ public class ArrayForYices {
 		newArrayEx.add(realIndexEx);
 		newArrayEx.add(valueEx.clone());
 		arrayEx = newArrayEx.clone();
+	}
+	
+	public Expression array_length()
+	{
+		return lengthEx;
 	}
 	
 	public String toYicesStatement()

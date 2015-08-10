@@ -101,12 +101,12 @@ public class SymbolicExecution {
 				}
 				break;
 			}
-			/**
-			 * Three ways of dealing with method invocation:
-			 * 1. Use API model
-			 * 2. Use API original dex
-			 * 3. Ignore API
-			 * */
+/**
+ * Three ways of dealing with method invocation:
+ * 1. Use API model
+ * 2. Use API original dex
+ * 3. Ignore API
+ * */
 			else if (s.invokesMethod() && useAPIModels)
 			{
 				if (!staticApp.alreadyContainsLibraries)
@@ -171,7 +171,6 @@ public class SymbolicExecution {
 									subReg.originalParamName);
 							for (Expression newFieldEx : subReg.fieldExs)
 							{
-								System.out.println("updating fieldEx [" + subReg.regName + "]: " + newFieldEx.toYicesStatement());
 								updateFieldEx(originalReg, newFieldEx.clone());
 							}
 						}
@@ -454,7 +453,6 @@ public class SymbolicExecution {
 				}
 				else
 				{
-					// TODO APIs?
 					Expression tempResultEx = new Expression("$api");
 					tempResultEx.add(new Expression(s.getSmaliStmt()));
 					// Temp Invoke Expression Format:
@@ -473,11 +471,13 @@ public class SymbolicExecution {
 							}
 						}
 					}
-					System.out.println("[Aug3]" + tempResultEx.toYicesStatement());
 					symbolicContext.recentInvokeResult = tempResultEx;
 				}
 
 			}
+/**
+ *  End of Invoke
+ **/
 			else if (s.switchJumps())
 			{
 				String stmtInfo = className + ":" + s.getSourceLineNumber();
@@ -613,6 +613,10 @@ public class SymbolicExecution {
 					nextStmtID = s.getStmtID()+1;
 				}
 			}
+			
+  ///////////////////////////////////
+ //	  Updates Symbolic States	////
+///////////////////////////////////
 			else if (s.updatesSymbolicStates())
 			{
 				boolean updateRegs = true;
@@ -665,12 +669,14 @@ public class SymbolicExecution {
 							Expression arrayEx = (Expression) ex.getChildAt(1);
 							Expression lengthEx = (Expression) arrayEx.getChildAt(0);
 							String lengthSymbol = lengthEx.getContent();
+							// solve length if needed
 							if (lengthSymbol.startsWith("v")||lengthSymbol.startsWith("p"))
 							{
 								Expression newLengthEx = symbolicContext.findValueOf(lengthEx);
 								arrayEx.remove(0);
 								arrayEx.insert(newLengthEx, 0);
 							}
+							// if there are elements in this array, solve their index and value
 							if (arrayEx.getChildCount() > 2)
 							{
 								for (int i = 2; i < arrayEx.getChildCount(); i++)
@@ -696,22 +702,11 @@ public class SymbolicExecution {
 								}
 							}
 							ArrayForYices aFY = new ArrayForYices(ex);
-							int index = -1;
-							for (int i = 0; i < symbolicContext.arrays.size(); i++)
-							{
-								if (symbolicContext.arrays.get(i).name.equals(aFY.name))
-								{
-									index = i;
-									break;
-								}
-							}
-							if (index > -1)
-								symbolicContext.arrays.remove(index);
-							symbolicContext.arrays.add(aFY);
+							symbolicContext.addArrayForYices(aFY);
 						}
 						else if (rightSymbol.equals("$array-length"))
 						{
-							Expression lengthEx = null;
+/*							Expression lengthEx = null;
 							try	// If unexpected happens, assume the length is 0
 							{
 								String arrayName = s.getvB();
@@ -725,7 +720,29 @@ public class SymbolicExecution {
 								lengthEx = new Expression("0");
 							}
 							ex.remove(1);
-							ex.insert(lengthEx.clone(), 1);
+							ex.insert(lengthEx.clone(), 1);*/
+							String arrayName = s.getvB();
+							for (ArrayForYices aFY : symbolicContext.arrays)
+							{
+								if (aFY.name.equals(arrayName))
+								{
+									if (aFY.isField)
+									{
+										// for field array, do not solve the length, replace array name with field signature
+										Expression fieldSigEx = aFY.fieldEx.clone();
+										right.remove(0);
+										right.add(fieldSigEx);
+									}
+									else
+									{
+										// for local array, solve the length, return length
+										Expression lengthEx = aFY.array_length().clone();
+										ex.remove(1);
+										ex.insert(lengthEx, 1);
+									}
+									break;
+								}
+							}
 						}
 						/**
 						 * aget and aput might run into trouble if the
@@ -742,7 +759,7 @@ public class SymbolicExecution {
 						 **/
 						else if (rightSymbol.equals("$aget"))
 						{
-							String arrayName = s.getvB();
+/*							String arrayName = s.getvB();
 							String indexS = s.getvC();
 							Register targetIndexReg = symbolicContext.findRegister(indexS);
 							Expression targetIndexEx = (Expression) targetIndexReg.ex.getChildAt(1);
@@ -764,6 +781,33 @@ public class SymbolicExecution {
 							if (!foundArray) 
 							{
 								System.out.println("Could not find the ArrayExpression " + arrayName);
+							}*/
+							String arrayName = s.getvB();
+							String indexS = s.getvC();
+							Register targetIndexReg = symbolicContext.findRegister(indexS);
+							Expression targetIndexEx = (Expression) targetIndexReg.ex.getChildAt(1);
+							for (ArrayForYices aFY : symbolicContext.arrays)
+							{
+								if (aFY.name.equals(arrayName))
+								{
+									if (aFY.isField)
+									{
+										// do not solve the element, just replace the array name with field sig
+										Expression fieldSigEx = aFY.fieldEx.clone();
+										Expression agetEx = (Expression) ex.getChildAt(1);
+										agetEx.removeAllChildren();
+										agetEx.add(fieldSigEx);
+										agetEx.add(targetIndexEx);
+									}
+									else
+									{
+										// solve the element
+										ex.remove(1);
+										ex.insert(aFY.aget(targetIndexEx), 1);
+									}
+									break;
+								}
+								
 							}
 						}
 						else if (rightSymbol.equals("$aput"))
@@ -773,18 +817,23 @@ public class SymbolicExecution {
 							String indexS = s.getvC();
 							Register targetIndexReg = symbolicContext.findRegister(indexS);
 							Expression targetIndexEx = (Expression) targetIndexReg.ex.getChildAt(1);
-							boolean foundArray = false;
+							Expression valueEx = symbolicContext.findValueOf(left);
 							// Two things can happen here: 
 							// 1. this array is initiated in current context, then it can be found within the 'symbolicContext.arrays'
-							// 2. this array is initiated outside of current context, then it should be a field, we need to look for its value? (TODO) maybe its value should also be seen when it was iget'd.
+							// 2. this array is initiated outside of current context, then it should be a field, 
+							//    we need to look for its value? maybe its value should also be seen when it was iget'd.
+							//UPDATE (Aug 10):
+							// 1. same
+							// 2. in this case, keep the $aput keyword. output something like this:
+							//		Array = ($aput Index Value)
+							
+							/*boolean foundArray = false;
 							for (ArrayForYices aFY : symbolicContext.arrays)	// case 1
 							{
 								if (aFY.name.equals(arrayName))
 								{
 									foundArray = true;
-									System.out.println("[BEFORE]" + aFY.toYicesStatement());
 									aFY.aput(targetIndexEx, symbolicContext.findValueOf(left));
-									System.out.println("[AFTER ]" + aFY.toYicesStatement());
 									//TODO if the array is also a field, then we need to update the corresponding field value
 									// because there won't be an iput/sput in the code
 									if (aFY.isField)
@@ -806,11 +855,31 @@ public class SymbolicExecution {
 								Expression newArray = new Expression("$array");
 								newArray.add(new Expression("0"));
 								
+							}*/
+							for (ArrayForYices aFY : symbolicContext.arrays)
+							{
+								if (aFY.name.equals(arrayName))
+								{
+									// update the aFY
+									// if aFY is field, then put "Array = ($aput Index Value)" into output
+									aFY.aput(targetIndexEx, valueEx);
+									if (aFY.isField)
+									{
+										Expression rightAputEx = new Expression("$aput");
+										rightAputEx.add(targetIndexEx.clone());
+										rightAputEx.add(valueEx.clone());
+										Expression aputEx = new Expression("=");
+										aputEx.add(aFY.fieldEx.clone());
+										aputEx.add(rightAputEx);
+										symbolicContext.updateOutExs(aputEx);
+									}
+								}
 							}
 						}
 						/** update the object variable, then if the same field was assigned
 						 *  previously, copy that value;
-						 *  TODO: if the field is an array and it was not assigned previously, it could still have an initial value. Goto the init and clinit, maybe copy that value??
+						 *  if the field is an array and it was not assigned previously, it could still have an initial value. Goto the init and clinit, maybe copy that value??
+						 *  UPDATE (Aug 10): Trying different approach. If field array not assigned previously, then look at it as a symbol.
 						 *  */
 						else if (rightSymbol.equals("$Finstance"))
 						{
@@ -837,10 +906,9 @@ public class SymbolicExecution {
 							String fieldSig = ((Expression)right.getChildAt(0)).getContent();
 							if (!foundInitValue && fieldSig.contains("["))
 							{
-								//TODO look into the init and clinit
+								// look into the init and clinit
 								// if there is initiation, replace ex.child(1) with new value
 								// also put the assignment into the object's outExs
-								
 								FieldInitializer finit = new FieldInitializer(right, fieldSig, (byte) 'i', staticApp);
 								Expression newRight = finit.findFieldInitValue();
 								if (newRight != null)
@@ -852,11 +920,11 @@ public class SymbolicExecution {
 									newFieldEx.add(right.clone());
 									newFieldEx.add(newRight.clone());
 									objReg.fieldExs.add(newFieldEx.clone());
-									symbolicContext.outExs.add(newFieldEx);
+									//symbolicContext.outExs.add(newFieldEx);
 									ArrayForYices aFY = new ArrayForYices(ex.clone());
 									aFY.isField = true;
 									aFY.fieldEx = right.clone();
-									symbolicContext.arrays.add(aFY);			
+									symbolicContext.addArrayForYices(aFY);		
 								}
 							}
 						}
@@ -896,11 +964,11 @@ public class SymbolicExecution {
 									Expression newFieldEx = new Expression("=");
 									newFieldEx.add(right.clone());
 									newFieldEx.add(newRight.clone());
-									symbolicContext.outExs.add(newFieldEx);
+									//symbolicContext.outExs.add(newFieldEx);
 									ArrayForYices aFY = new ArrayForYices(ex.clone());
 									aFY.isField = true;
 									aFY.fieldEx = right.clone();
-									symbolicContext.arrays.add(aFY);
+									symbolicContext.addArrayForYices(aFY);
 								}
 							}
 						}
@@ -929,7 +997,7 @@ public class SymbolicExecution {
 					   register and the paramRegister. So no extra action
 					   needed here.
 					*/
-					if (updateRegs) // no need for aput TODO: WHY no need for aput? 
+					if (updateRegs) // no need for aput, WHY?
 									// Because there is no assignment i.e. left = right. What "aput" does is update the array content, which strictly is not an register assignment
 					{
 						for (Register reg : symbolicContext.registers)
@@ -960,13 +1028,13 @@ public class SymbolicExecution {
 						}
 					}
 				}
-				/** rightSymbol is a variable, update rightEx,
-				 *  then put it to:
-				 *   corresponding register's fieldEx
-				 *   if ( left contains $Fstatic
-				 *     or not a param reg but left contains the value of one of the params)
-				 *   put it in outEx
-				 *   */
+/** rightSymbol is a variable, update rightEx,
+ *  then put it to:
+ *   corresponding register's fieldEx
+ *   if ( left contains $Fstatic
+ *     or not a param reg but left contains the value of one of the params)
+ *   put it in outEx
+ *   */
 				else if (leftSymbol.equals("$Finstance"))
 				{
 					// 1. update right
@@ -1036,9 +1104,9 @@ public class SymbolicExecution {
 						}
 					}
 				}
-				/** rightsymbol is a variable, update rightEx,
-				 *  then put the ex to outEx
-				 * */
+/** rightsymbol is a variable, update rightEx,
+ *  then put the ex to outEx
+ * */
 				else if (leftSymbol.equals("$Fstatic"))
 				{
 					Expression updatedRight = symbolicContext.findValueOf(right);
@@ -1047,6 +1115,9 @@ public class SymbolicExecution {
 					symbolicContext.updateOutExs(ex);
 				}
 			}
+  ///////////////////////////////////
+ //	  Updates Symbolic States	////
+///////////////////////////////////
 			else if (s.gotoJumps())
 			{
 				String targetLabel = (String) s.getData();
@@ -1313,6 +1384,19 @@ public class SymbolicExecution {
 				}
 			}
 			outExs.add(newOutEx.clone());
+		}
+		public void addArrayForYices(ArrayForYices aFY_to_add)
+		{
+			for (int i = 0; i < arrays.size(); i++)
+			{
+				if (arrays.get(i).name.equals(aFY_to_add.name))
+				{
+					arrays.remove(i);
+					arrays.add(aFY_to_add);
+					return;
+				}
+			}
+			arrays.add(aFY_to_add);
 		}
 	}
 	
