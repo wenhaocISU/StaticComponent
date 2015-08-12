@@ -17,6 +17,7 @@ public class Blacklist {
 	 * with these huge methods efficiently.
 	 * */
 	public static ArrayList<String> classes = new ArrayList<String>(Arrays.asList(
+			"Landroid/app/*",
 			"Landroid/support/v4/*",
 			"Landroid/support/v7/*",
 			"Landroid/support/annotation/*",
