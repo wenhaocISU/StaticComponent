@@ -701,6 +701,7 @@ public class SymbolicExecution {
 									//}
 								}
 							}
+							//this means initiation, therefore overwrites previous assignments
 							ArrayForYices aFY = new ArrayForYices(ex);
 							symbolicContext.addArrayForYices(aFY);
 						}
@@ -729,9 +730,10 @@ public class SymbolicExecution {
 									if (aFY.isField)
 									{
 										// for field array, do not solve the length, replace array name with field signature
+										// find the 'value' of this field array if there's any
 										Expression fieldSigEx = aFY.fieldEx.clone();
 										right.remove(0);
-										right.add(fieldSigEx);
+										right.add(symbolicContext.findArrayExOfField(fieldSigEx));
 									}
 									else
 									{
@@ -785,7 +787,7 @@ public class SymbolicExecution {
 							String arrayName = s.getvB();
 							String indexS = s.getvC();
 							Register targetIndexReg = symbolicContext.findRegister(indexS);
-							Expression targetIndexEx = (Expression) targetIndexReg.ex.getChildAt(1);
+							Expression targetIndexEx = ((Expression) targetIndexReg.ex.getChildAt(1)).clone();
 							for (ArrayForYices aFY : symbolicContext.arrays)
 							{
 								if (aFY.name.equals(arrayName))
@@ -793,10 +795,11 @@ public class SymbolicExecution {
 									if (aFY.isField)
 									{
 										// do not solve the element, just replace the array name with field sig
+										// find the value of this field array if there's any
 										Expression fieldSigEx = aFY.fieldEx.clone();
 										Expression agetEx = (Expression) ex.getChildAt(1);
 										agetEx.removeAllChildren();
-										agetEx.add(fieldSigEx);
+										agetEx.add(symbolicContext.findArrayExOfField(fieldSigEx));
 										agetEx.add(targetIndexEx);
 									}
 									else
@@ -827,14 +830,14 @@ public class SymbolicExecution {
 							// 2. in this case, keep the $aput keyword. output something like this:
 							//		Array = ($aput Index Value)
 							
-							/*boolean foundArray = false;
+/*							boolean foundArray = false;
 							for (ArrayForYices aFY : symbolicContext.arrays)	// case 1
 							{
 								if (aFY.name.equals(arrayName))
 								{
 									foundArray = true;
 									aFY.aput(targetIndexEx, symbolicContext.findValueOf(left));
-									//TODO if the array is also a field, then we need to update the corresponding field value
+									//if the array is also a field, then we need to update the corresponding field value
 									// because there won't be an iput/sput in the code
 									if (aFY.isField)
 									{
@@ -860,24 +863,38 @@ public class SymbolicExecution {
 							{
 								if (aFY.name.equals(arrayName))
 								{
-									// update the aFY
-									// if aFY is field, then put "Array = ($aput Index Value)" into output
-									aFY.aput(targetIndexEx, valueEx);
+									aFY.aput(targetIndexEx.clone(), valueEx.clone());
 									if (aFY.isField)
 									{
-										Expression rightAputEx = new Expression("$aput");
-										rightAputEx.add(targetIndexEx.clone());
-										rightAputEx.add(valueEx.clone());
+										// if aFY is field, then put "Array = ($aput Array Index Value)" into output
+										// UPDATE (Aug 12): now we need the right side to be in 'update' format
 										Expression aputEx = new Expression("=");
 										aputEx.add(aFY.fieldEx.clone());
-										aputEx.add(rightAputEx);
+										aputEx.add(aFY.arrayEx.clone());
 										symbolicContext.updateOutExs(aputEx);
+										if (aFY.fieldEx.getContent().equals("$Finstance"))
+										{
+											// 
+											Expression objValueEx = (Expression)aFY.fieldEx.getChildAt(1);
+											for (Register reg : symbolicContext.registers)
+											{
+												Expression regValue = (Expression)reg.ex.getChildAt(1);
+												if (objValueEx.equals(regValue))
+												{
+													updateFieldEx(reg, aputEx);
+												}
+											}
+										}
 									}
 								}
 							}
 						}
 						/** update the object variable, then if the same field was assigned
-						 *  previously, copy that value;
+						 *  previously, copy that value;								ArrayForYices aFY = new ArrayForYices();
+								aFY.name = left.getContent();
+								aFY.isField = true;
+								aFY.fieldEx = right.clone();
+								symbolicContext.addArrayForYices(aFY);
 						 *  if the field is an array and it was not assigned previously, it could still have an initial value. Goto the init and clinit, maybe copy that value??
 						 *  UPDATE (Aug 10): Trying different approach. If field array not assigned previously, then look at it as a symbol.
 						 *  */
@@ -904,12 +921,15 @@ public class SymbolicExecution {
 								}
 							}
 							String fieldSig = ((Expression)right.getChildAt(0)).getContent();
-							if (!foundInitValue && fieldSig.contains("["))
+							if (!foundInitValue && fieldSig.contains("["))	// this field is also an array
 							{
 								// look into the init and clinit
 								// if there is initiation, replace ex.child(1) with new value
 								// also put the assignment into the object's outExs
-								FieldInitializer finit = new FieldInitializer(right, fieldSig, (byte) 'i', staticApp);
+								// UPDATE (Aug 11): Do not look into the init and clinit,
+								// 					just create a dummy AFY
+								
+/*								FieldInitializer finit = new FieldInitializer(right, fieldSig, (byte) 'i', staticApp);
 								Expression newRight = finit.findFieldInitValue();
 								if (newRight != null)
 								{
@@ -924,8 +944,19 @@ public class SymbolicExecution {
 									ArrayForYices aFY = new ArrayForYices(ex.clone());
 									aFY.isField = true;
 									aFY.fieldEx = right.clone();
-									symbolicContext.addArrayForYices(aFY);		
-								}
+									symbolicContext.addArrayForYices(aFY);
+								}*/
+								
+								//make sure that in this scenario, the result is correct:
+								//	iget v1, array1;
+								//	aput something into v1;
+								//	iget v2, array1;	(here the state of v2 should reflect the aput)
+								//Result proves we did it.
+								ArrayForYices aFY = new ArrayForYices();
+								aFY.name = left.getContent();
+								aFY.isField = true;
+								aFY.fieldEx = right.clone();
+								symbolicContext.addArrayForYices(aFY);
 							}
 						}
 						/** see if the field was previously assigned, copy that value;
@@ -950,12 +981,14 @@ public class SymbolicExecution {
 								}
 							}
 							String fieldSig = ((Expression)right.getChildAt(0)).getContent();
-							if (!foundInitValue && fieldSig.contains("["))
+							if (!foundInitValue && fieldSig.contains("["))	// this field is also an array
 							{
 								//look into the init and clinit
 								// if there is initiation, then replace ex.child(1) with new value.
 								// also need to put the field assignment in the context
-								FieldInitializer finit = new FieldInitializer(right, fieldSig, (byte) 'i', staticApp);
+								// UPDATE (Aug 11): Do not look into the init and clinit,
+								// 					just create a dummy AFY
+/*								FieldInitializer finit = new FieldInitializer(right, fieldSig, (byte) 'i', staticApp);
 								Expression newRight = finit.findFieldInitValue();
 								if (newRight != null)
 								{
@@ -969,7 +1002,12 @@ public class SymbolicExecution {
 									aFY.isField = true;
 									aFY.fieldEx = right.clone();
 									symbolicContext.addArrayForYices(aFY);
-								}
+								}*/
+								ArrayForYices aFY = new ArrayForYices();
+								aFY.name = left.getContent();
+								aFY.isField = true;
+								aFY.fieldEx = right.clone();
+								symbolicContext.addArrayForYices(aFY);
 							}
 						}
 					}
@@ -1039,6 +1077,16 @@ public class SymbolicExecution {
 				{
 					// 1. update right
 					Expression updatedRight = symbolicContext.findValueOf(right);
+					if (updatedRight.getContent().equals("$array"))
+					{
+						for (ArrayForYices aFY : symbolicContext.arrays)
+						{
+							if (aFY.name.equals(right.getContent()))
+							{
+								updatedRight = aFY.arrayEx.clone();
+							}
+						}
+					}
 					ex.remove(1);
 					ex.insert(updatedRight, 1);
 					// 2. update this field in the object reg's fieldExs
@@ -1342,6 +1390,19 @@ public class SymbolicExecution {
 				}
 			}
 			return theLeft;
+		}
+		public Expression findArrayExOfField(Expression fieldSig)
+		{
+			for (ArrayForYices aFY : arrays)
+			{
+				if (aFY.fieldEx.equals(fieldSig))
+				{
+					if (aFY.arrayEx != null)
+						return aFY.arrayEx.clone();
+					else return aFY.fieldEx.clone();
+				}
+			}
+			return fieldSig;
 		}
 		public void printAll()
 		{

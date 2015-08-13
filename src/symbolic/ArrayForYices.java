@@ -5,7 +5,7 @@ public class ArrayForYices {
 
 	public String name = "";
 	public String type = "";
-	private Expression arrayEx = null;
+	public Expression arrayEx = null;
 	private Expression lengthEx = null;
 	public boolean isField = false;
 	public Expression fieldEx = null;
@@ -59,6 +59,11 @@ public class ArrayForYices {
 	
 	public void aput(Expression indexEx, Expression valueEx)
 	{
+		if (this.isField && this.arrayEx == null)
+		{
+			this.arrayEx = this.fieldEx.clone();
+		}
+		
 		Expression realIndexEx = new Expression("");
 		realIndexEx.add(indexEx.clone());
 		Expression newArrayEx = new Expression("update");
