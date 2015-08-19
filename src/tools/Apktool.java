@@ -45,7 +45,7 @@ public class Apktool {
 						+ " b -f -a " + Paths.aaptPath
 						+ " -o " + outPath
 						+ " " + sourceDir;
-		System.out.println("Compiling into APK file...");
+		System.out.println("Compiling instrumented smali code into APK file...");
 		try {
 			Process pc = Runtime.getRuntime().exec(command);
 			BufferedReader in = new BufferedReader(new InputStreamReader(pc.getInputStream()));

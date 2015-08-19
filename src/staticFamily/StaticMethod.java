@@ -80,6 +80,19 @@ public class StaticMethod implements Serializable {
 	public ArrayList<String> getParamTypes() {
 		return paramTypes;
 	}
+	
+	public int getParamRegCount()
+	{
+		int result = this.isStatic()? 0 : 1;
+		for (String pType : paramTypes)
+		{
+			if (pType.equals("J") || pType.equals("D"))
+				result += 2;
+			else
+				result += 1;
+		}
+		return result;
+	}
 
 	public void setParamTypes(ArrayList<String> paramTypes) {
 		this.paramTypes = paramTypes;

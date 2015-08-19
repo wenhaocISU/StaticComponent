@@ -42,6 +42,7 @@ public class Utility {
 	
 	public static void saveObject(Object obj, String filePath)
 	{
+		System.out.print("Writing StaticApp into file...");
 		File f = new File(filePath);
 		if (f.exists())
 			f.delete();
@@ -54,6 +55,7 @@ public class Utility {
 		{
 			e.printStackTrace();
 		}
+		System.out.println(" Done.");
 	}
 	
 	@SuppressWarnings("serial")
@@ -76,22 +78,24 @@ public class Utility {
 			return dexName.substring(1, dexName.length()-1).replace("/", ".");
 		else if (primitiveTypes.containsKey(dexName))
 			return primitiveTypes.get(dexName);
-		return "";
+		return dexName;
 	}
 	
 	public static String javaToDexTypeName(String javaName)
 	{
+		if (javaName.startsWith("L") && javaName.endsWith(";"))
+			return javaName;
 		switch (javaName) 
 		{
-			case "V":	return "void";
-			case "Z":	return "boolean";
-			case "B":	return "byte";
-			case "S":	return "short";
-			case "C":	return "char";
-			case "I":	return "int";
-			case "J":	return "long";
-			case "F":	return "float";
-			case "D":	return "double";
+			case "void":	return "V";
+			case "boolean":	return "Z";
+			case "byte":	return "B";
+			case "short":	return "S";
+			case "char":	return "C";
+			case "int":		return "I";
+			case "long":	return "J";
+			case "float":	return "F";
+			case "double":	return "D";
 			default:	return "L" + javaName.replace(".", "/") + ";";
 		}
 	}

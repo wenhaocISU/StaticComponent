@@ -203,83 +203,110 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 						if (s.getStmtID() == 0 && 
 							!Blacklist.classInBlackList(c.getDexName()))
 						{
-							String line1 = "    sget-object v0, Ljava/lang/System;->out:Ljava/io/PrintStream;";
-							String line2 = "    const-string v1, \"METHOD_STARTING," + m.getSignature() + "\"";
-							String line3 = "    invoke-virtual {v0, v1}, Ljava/io/PrintStream;->println(Ljava/lang/String;)V";
+							// Step1: find insertion location
 							int insertLocation = index - 1;
 							String tempLine = smaliCode.get(insertLocation);
 							while (!tempLine.equals("") && !tempLine.equals("    .prologue"))
+							{
 								tempLine = smaliCode.get(--insertLocation);
-							smaliCode.add(insertLocation+1, "");
-							smaliCode.add(insertLocation+1, line3);
-							smaliCode.add(insertLocation+1, line2);
-							smaliCode.add(insertLocation+1, line1);
-							index += 4;
-							if (m.getLocalVariableCount() < 2)
-							{
-								while (!tempLine.startsWith("    .locals "))
-									tempLine = smaliCode.get(--insertLocation);
-								smaliCode.set(insertLocation, "    .locals 2");
 							}
-						}
-						else if (s.getSmaliStmt().startsWith("return") &&
-								!Blacklist.classInBlackList(c.getDexName()))
-						{
-							ArrayList<Integer> occupiedReg = new ArrayList<Integer>();
-							int outVNo = 0, stringVNo = 0, returnVNo = -1;
-							String returnVName = s.getvA();
-							if (returnVName.startsWith("v"))
-								returnVNo = Integer.parseInt(returnVName.replace("v", ""));
-							occupiedReg.add(returnVNo);
-							if (s.getSmaliStmt().startsWith("return-wide"))
-								occupiedReg.add(returnVNo+1);
-							boolean foundSlots = false;
-							for(int i = 0; i < m.getLocalVariableCount()-1; i++)
+							smaliCode.add(insertLocation+1, "");
+							index++;
+							// Step2: check to see if there's enough registers for instrumentation
+							if (m.getLocalVariableCount() < 2 && m.getLocalVariableCount()+m.getParamRegCount()>14 )
 							{
-								if (!occupiedReg.contains(i) && !occupiedReg.contains(i+1))
+								// not enough registers, NEED to add temp field
+								SpecialInstrumentation si = new SpecialInstrumentation();
+								index += si.add_println_beginning(c, m, smaliCode, insertLocation);
+							}
+							else
+							{	// there're enough registers, NO NEED to add temp field
+								// might need to change local register count
+								String line1 = "    sget-object v0, Ljava/lang/System;->out:Ljava/io/PrintStream;";
+								String line2 = "    const-string v1, \"METHOD_STARTING," + m.getSignature() + "\"";
+								String line3 = "    invoke-virtual {v0, v1}, Ljava/io/PrintStream;->println(Ljava/lang/String;)V";
+								smaliCode.add(insertLocation+1, line3);
+								smaliCode.add(insertLocation+1, line2);
+								smaliCode.add(insertLocation+1, line1);
+								index += 3;
+								if (m.getLocalVariableCount() < 2)
 								{
-									foundSlots = true;
-									outVNo = i;
-									stringVNo = i + 1;
-									break;
+									while (!tempLine.startsWith("    .locals "))
+										tempLine = smaliCode.get(--insertLocation);
+									smaliCode.set(insertLocation, "    .locals 2");
 								}
 							}
-							if (!foundSlots)
+							
+						}
+						if (s.getSmaliStmt().startsWith("return") &&
+								!Blacklist.classInBlackList(c.getDexName()))
+						{
+							// Step 1. check to see if there's enough registers for instrumentation
+							if ( m.getLocalVariableCount() < 2 && m.getLocalVariableCount()+m.getParamRegCount()>14 )
 							{
-								outVNo = occupiedReg.get(occupiedReg.size()-1)+1;
-								stringVNo = outVNo + 1;
+								// CANNOT add more local registers, need special instrumentation
+								SpecialInstrumentation si = new SpecialInstrumentation();
+								index += si.add_println_returning(c, m, smaliCode, index);
 							}
-							String line1 = "    sget-object v" + outVNo + ", Ljava/lang/System;->out:Ljava/io/PrintStream;";
-							String line2 = "    const-string v" + stringVNo + ", \"METHOD_RETURNING," + m.getSignature() + "\"";
-							String line3 = "    invoke-virtual {v" + outVNo + ", v" + stringVNo + "}, Ljava/io/PrintStream;->println(Ljava/lang/String;)V";
-							int insertLocation = index - 1;
-							String tempLine = smaliCode.get(insertLocation);
-							boolean moveLabel = false;
-							String labelLine = smaliCode.get(insertLocation-1);
-							if (labelLine.startsWith("    :"))
+							else
 							{
-								moveLabel = true;
-								smaliCode.remove(insertLocation-1);
-								index--;
-								insertLocation--;
-							}
-							while (!tempLine.equals(""))
-								tempLine = smaliCode.get(--insertLocation);
-							smaliCode.add(insertLocation+1, "");
-							smaliCode.add(insertLocation+1, line3);
-							smaliCode.add(insertLocation+1, line2);
-							smaliCode.add(insertLocation+1, line1);
-							if (moveLabel)
-							{
-								smaliCode.add(insertLocation+1, labelLine);
-								index++;
-							}
-							index += 4;
-							if (stringVNo >= m.getLocalVariableCount())
-							{
-								while (!tempLine.startsWith("    .locals "))
+								// Can use local registers to do instrumentation
+								ArrayList<Integer> occupiedReg = new ArrayList<Integer>();
+								int outVNo = 0, stringVNo = 0, returnVNo = -1;
+								String returnVName = s.getvA();
+								if (returnVName.startsWith("v"))
+									returnVNo = Integer.parseInt(returnVName.replace("v", ""));
+								occupiedReg.add(returnVNo);
+								if (s.getSmaliStmt().startsWith("return-wide"))
+									occupiedReg.add(returnVNo+1);
+								boolean foundSlots = false;
+								for(int i = 0; i < m.getLocalVariableCount()-1; i++)
+								{
+									if (!occupiedReg.contains(i) && !occupiedReg.contains(i+1))
+									{
+										foundSlots = true;
+										outVNo = i;
+										stringVNo = i + 1;
+										break;
+									}
+								}
+								if (!foundSlots)
+								{
+									outVNo = occupiedReg.get(occupiedReg.size()-1)+1;
+									stringVNo = outVNo + 1;
+								}
+								String line1 = "    sget-object v" + outVNo + ", Ljava/lang/System;->out:Ljava/io/PrintStream;";
+								String line2 = "    const-string v" + stringVNo + ", \"METHOD_RETURNING," + m.getSignature() + "\"";
+								String line3 = "    invoke-virtual {v" + outVNo + ", v" + stringVNo + "}, Ljava/io/PrintStream;->println(Ljava/lang/String;)V";
+								int insertLocation = index - 1;
+								String tempLine = smaliCode.get(insertLocation);
+								boolean moveLabel = false;
+								String labelLine = smaliCode.get(insertLocation-1);
+								if (labelLine.startsWith("    :"))
+								{
+									moveLabel = true;
+									smaliCode.remove(insertLocation-1);
+									index--;
+									insertLocation--;
+								}
+								while (!tempLine.equals(""))
 									tempLine = smaliCode.get(--insertLocation);
-								smaliCode.set(insertLocation, "    .locals " + (stringVNo+1));
+								smaliCode.add(insertLocation+1, "");
+								smaliCode.add(insertLocation+1, line3);
+								smaliCode.add(insertLocation+1, line2);
+								smaliCode.add(insertLocation+1, line1);
+								if (moveLabel)
+								{
+									smaliCode.add(insertLocation+1, labelLine);
+									index++;
+								}
+								index += 4;
+								if (stringVNo >= m.getLocalVariableCount())
+								{
+									while (!tempLine.startsWith("    .locals "))
+										tempLine = smaliCode.get(--insertLocation);
+									smaliCode.set(insertLocation, "    .locals " + (stringVNo+1));
+								}
 							}
 						}
 						/** Instrumentation Job 3:

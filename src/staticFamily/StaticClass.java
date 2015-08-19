@@ -17,6 +17,7 @@ public class StaticClass implements Serializable {
 	
 	private List<StaticField> fields = new ArrayList<StaticField>();
 	private List<StaticMethod> methods = new ArrayList<StaticMethod>();
+	public ArrayList<StaticField> tempFields = new ArrayList<StaticField>();
 	
 	private String superClass = "";
 	private List<String> interfaces = new ArrayList<String>();
@@ -259,5 +260,6 @@ public class StaticClass implements Serializable {
 				return f;
 		return null;
 	}
+	
 	
 }

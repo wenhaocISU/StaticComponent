@@ -29,6 +29,7 @@ public class StaticInfo {
 	public static boolean instrumentApps = true;
 	public static boolean decodeRes = true;
 	public static boolean parseManifest = true;
+	public static boolean storeStaticAppObject = true;
 	
 	public static StaticApp initAnalysis(String apkPath, boolean forceBuild)
 	{
@@ -49,7 +50,8 @@ public class StaticInfo {
 				staticApp.setApkPath(apkPath);
 				staticApp.setDataFolder(Paths.AppDataDir + "/" + apk.getName().replace(" ", ""));
 				buildStaticApp(staticApp);
-				Utility.saveObject(staticApp, staticAppObjectPath);
+				if (storeStaticAppObject)
+					Utility.saveObject(staticApp, staticAppObjectPath);
 			}
 			// build instrumented apk
 			if (instrumentApps)
@@ -86,12 +88,13 @@ public class StaticInfo {
 	private static List<StaticClassBuilder> classBuilders = new ArrayList<StaticClassBuilder>();
 	private static void buildStaticApp(StaticApp staticApp)
 	{
-		// Step 1
+		// Step 1: decompile apk using apktool
 		String apkPath = staticApp.getApkPath();
 		String outDir = staticApp.getDataFolder() + "/apktool/";
 		Apktool.extractAPK(apkPath, outDir, decodeRes);
-		// Step 2
+		// Step 2: parse smali and xml files, collect data into StaticFamily objects
 		File smaliFolder = new File(staticApp.getDataFolder() + "/apktool/smali");
+		System.out.print("Parsing smali files. Might take a while...");
 		initClassBuilders(staticApp, smaliFolder);
 		int threadCount = Runtime.getRuntime().availableProcessors();
 		ExecutorService executor = Executors.newFixedThreadPool(threadCount);
@@ -108,7 +111,9 @@ public class StaticInfo {
 		}
 		executor.shutdown();
 		classBuilders.clear();
-		// Step 3
+		System.out.println(" Done.");
+		// Step 3: Connecting inner classes and outer classes
+		System.out.print("Traversing StaticClass objects to connect between inner and outer classes...");
 		for (StaticClass c : staticApp.getClasses())
 		{
 			/** 
@@ -124,6 +129,8 @@ public class StaticInfo {
 				if (outerC != null)
 					outerC.addInnerClass(c.getJavaName());
 			}
+		}
+		System.out.println(" Done.");
 // Call graph is skipped for now, it takes too long
 /*			for (StaticMethod m : c.getMethods())
 			{
@@ -151,10 +158,12 @@ public class StaticInfo {
 				}
 			}
 */
-		}
 		// Step 4
 		if (parseManifest)
+		{
+			System.out.println("Parsing AndroidManifest.xml...");
 			parseManifest(staticApp);
+		}
 	}
 
 	private static void initClassBuilders(StaticApp staticApp, File smaliFile)
@@ -228,7 +237,7 @@ public class StaticInfo {
 				StaticClass c = staticApp.findClassByJavaName(aName);
 				if (c == null)
 				{
-					System.out.println("[WARNING] Could not find activity class " + aName);
+					System.out.println("  [WARNING] Could not find activity class " + aName);
 					continue;
 				}
 				c.setIsActivity(true);
