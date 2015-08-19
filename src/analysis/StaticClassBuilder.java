@@ -229,7 +229,7 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 								smaliCode.add(insertLocation+1, line2);
 								smaliCode.add(insertLocation+1, line1);
 								index += 3;
-								if (m.getLocalVariableCount() < 2)
+								if (m.getLocalVariableCount() < 2) 
 								{
 									while (!tempLine.startsWith("    .locals "))
 										tempLine = smaliCode.get(--insertLocation);
@@ -301,11 +301,12 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 									index++;
 								}
 								index += 4;
+								//TODO aa
 								if (stringVNo >= m.getLocalVariableCount())
 								{
 									while (!tempLine.startsWith("    .locals "))
 										tempLine = smaliCode.get(--insertLocation);
-									smaliCode.set(insertLocation, "    .locals " + (stringVNo+1));
+									//smaliCode.set(insertLocation, "    .locals " + (stringVNo+1));
 								}
 							}
 						}

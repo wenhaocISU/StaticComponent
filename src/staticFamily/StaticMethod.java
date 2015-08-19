@@ -83,10 +83,10 @@ public class StaticMethod implements Serializable {
 	
 	public int getParamRegCount()
 	{
-		int result = this.isStatic()? 0 : 1;
+		int result = 0;
 		for (String pType : paramTypes)
 		{
-			if (pType.equals("J") || pType.equals("D"))
+			if (pType.equals("long") || pType.equals("double"))
 				result += 2;
 			else
 				result += 1;
