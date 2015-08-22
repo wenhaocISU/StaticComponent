@@ -5,6 +5,7 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
@@ -23,7 +24,58 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 	private int maxOriginalLineNumber;
 	private int index = 1;
 	private MethodContext methodContext = new MethodContext();
+	String[] sigs = {
+/* good
+		"Lcom/google/android/gms/common/GooglePlayServicesUtil;-><clinit>()V",
+		"Lcom/google/android/gms/common/GooglePlayServicesUtil;-><init>()V",
+		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->D(Landroid/content/Context;)V",
+		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->E(Landroid/content/Context;)V",
+		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->F(Landroid/content/Context;)Ljava/lang/String;",
+		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->a(ILandroid/app/Activity;Landroid/support/v4/app/Fragment;ILandroid/content/DialogInterface$OnCancelListener;)Landroid/app/Dialog;",
+		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->a(Landroid/content/pm/PackageManager;Landroid/content/pm/PackageInfo;)Z",
+		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->a(Landroid/content/res/Resources;)Z",
+		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->a(Landroid/content/pm/PackageInfo;Z)[B",
+		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->a(Landroid/content/pm/PackageInfo;[[B)[B",
+		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->ai(I)Landroid/content/Intent;",
+		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->b(Landroid/content/pm/PackageManager;)Z",
+		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->b(Landroid/content/pm/PackageManager;Ljava/lang/String;)Z",
+		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->b(Landroid/content/res/Resources;)Z",
+		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->c(Landroid/content/Context;I)Landroid/content/Intent;",
+		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->c(Landroid/content/pm/PackageManager;)Z",
+		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->d(Landroid/content/Context;I)Ljava/lang/String;",
+		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->e(Landroid/content/Context;I)Ljava/lang/String;",
+		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->f(Landroid/content/Context;I)Ljava/lang/String;",
+   good */
+			
+	/*		
+		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->ga()Z",
+		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->getErrorDialog(ILandroid/app/Activity;I)Landroid/app/Dialog;",
+		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->getErrorDialog(ILandroid/app/Activity;ILandroid/content/DialogInterface$OnCancelListener;)Landroid/app/Dialog;",
+		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->getErrorPendingIntent(ILandroid/content/Context;I)Landroid/app/PendingIntent;",
+		
+		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->getErrorString(I)Ljava/lang/String;",
+	*/	
+		//"Lcom/google/android/gms/common/GooglePlayServicesUtil;->getOpenSourceSoftwareLicenseInfo(Landroid/content/Context;)Ljava/lang/String;",	// bad
+/*
+		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->getRemoteContext(Landroid/content/Context;)Landroid/content/Context;",
+*/		
+		
+/* good
+		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->getRemoteResource(Landroid/content/Context;)Landroid/content/res/Resources;",
+		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->isGooglePlayServicesAvailable(Landroid/content/Context;)I",
+		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->isGoogleSignedUid(Landroid/content/pm/PackageManager;I)Z",
+		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->isUserRecoverableError(I)Z",
 
+		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->showErrorDialogFragment(ILandroid/app/Activity;I)Z",
+		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->showErrorDialogFragment(ILandroid/app/Activity;ILandroid/content/DialogInterface$OnCancelListener;)Z",
+		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->showErrorDialogFragment(ILandroid/app/Activity;Landroid/support/v4/app/Fragment;ILandroid/content/DialogInterface$OnCancelListener;)Z",
+		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->showErrorNotification(ILandroid/content/Context;)V",
+    good  */
+
+	};
+	List<String> sigList = Arrays.asList(sigs);
+	
+	
 	@Override
 	public StaticClass call() throws Exception {
 		StaticClass c = new StaticClass();
@@ -234,15 +286,17 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 									while (!tempLine.startsWith("    .locals "))
 										tempLine = smaliCode.get(--insertLocation);
 									smaliCode.set(insertLocation, "    .locals 2");
+									m.setLocalVariableCount(2);
 								}
 							}
 							
 						}
-						if (s.getSmaliStmt().startsWith("return") &&
+
+						if (!sigList.contains(m.getSignature()) && s.getSmaliStmt().startsWith("return") &&
 								!Blacklist.classInBlackList(c.getDexName()))
 						{
 							// Step 1. check to see if there's enough registers for instrumentation
-							if ( m.getLocalVariableCount() < 2 && m.getLocalVariableCount()+m.getParamRegCount()>14 )
+							if ( m.getLocalVariableCount() < 2 && m.getLocalVariableCount()+m.getParamRegCount() > 14)
 							{
 								// CANNOT add more local registers, need special instrumentation
 								SpecialInstrumentation si = new SpecialInstrumentation();
@@ -257,7 +311,8 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 								if (returnVName.startsWith("v"))
 									returnVNo = Integer.parseInt(returnVName.replace("v", ""));
 								occupiedReg.add(returnVNo);
-								if (s.getSmaliStmt().startsWith("return-wide"))
+								// UPDATE(Aug21): sometimes "return-object" seems to also take 2 registers
+								if (s.getSmaliStmt().startsWith("return-wide") || s.getSmaliStmt().startsWith("return-object"))
 									occupiedReg.add(returnVNo+1);
 								boolean foundSlots = false;
 								for(int i = 0; i < m.getLocalVariableCount()-1; i++)
@@ -275,38 +330,52 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 									outVNo = occupiedReg.get(occupiedReg.size()-1)+1;
 									stringVNo = outVNo + 1;
 								}
-								String line1 = "    sget-object v" + outVNo + ", Ljava/lang/System;->out:Ljava/io/PrintStream;";
-								String line2 = "    const-string v" + stringVNo + ", \"METHOD_RETURNING," + m.getSignature() + "\"";
-								String line3 = "    invoke-virtual {v" + outVNo + ", v" + stringVNo + "}, Ljava/io/PrintStream;->println(Ljava/lang/String;)V";
-								int insertLocation = index - 1;
-								String tempLine = smaliCode.get(insertLocation);
-								boolean moveLabel = false;
-								String labelLine = smaliCode.get(insertLocation-1);
-								if (labelLine.startsWith("    :"))
+								if (stringVNo >= m.getLocalVariableCount() && (stringVNo+1+m.getParamRegCount() > 15))
 								{
-									moveLabel = true;
-									smaliCode.remove(insertLocation-1);
-									index--;
-									insertLocation--;
+									SpecialInstrumentation si = new SpecialInstrumentation();
+									index += si.add_println_returning(c, m, smaliCode, index);
 								}
-								while (!tempLine.equals(""))
-									tempLine = smaliCode.get(--insertLocation);
-								smaliCode.add(insertLocation+1, "");
-								smaliCode.add(insertLocation+1, line3);
-								smaliCode.add(insertLocation+1, line2);
-								smaliCode.add(insertLocation+1, line1);
-								if (moveLabel)
+								else
 								{
-									smaliCode.add(insertLocation+1, labelLine);
-									index++;
-								}
-								index += 4;
-								//TODO aa
-								if (stringVNo >= m.getLocalVariableCount())
-								{
-									while (!tempLine.startsWith("    .locals "))
+									String line1 = "    sget-object v" + outVNo + ", Ljava/lang/System;->out:Ljava/io/PrintStream;";
+									String line2 = "    const-string v" + stringVNo + ", \"METHOD_RETURNING," + m.getSignature() + "\"";
+									String line3 = "    invoke-virtual {v" + outVNo + ", v" + stringVNo + "}, Ljava/io/PrintStream;->println(Ljava/lang/String;)V";
+									int insertLocation = index - 1;
+									String tempLine = smaliCode.get(insertLocation);
+									// the return statement could have more than 1 label
+									boolean moveLabel = false;
+									ArrayList<String> labelLines = new ArrayList<String>();
+									String labelLine = smaliCode.get(insertLocation-1);
+									while (labelLine.startsWith("    :"))
+									{
+										moveLabel = true;
+										smaliCode.remove(insertLocation-1);
+										labelLines.add(labelLine);
+										index--;
+										insertLocation--;
+										labelLine = smaliCode.get(insertLocation-1);
+									}
+									while (!tempLine.equals(""))
 										tempLine = smaliCode.get(--insertLocation);
-									//smaliCode.set(insertLocation, "    .locals " + (stringVNo+1));
+									smaliCode.add(insertLocation+1, "");
+									smaliCode.add(insertLocation+1, line3);
+									smaliCode.add(insertLocation+1, line2);
+									smaliCode.add(insertLocation+1, line1);
+									index += 4;
+									if (moveLabel)
+									{
+										for (int i = 0; i < labelLines.size(); i++)
+										{
+											smaliCode.add(insertLocation+1, labelLines.get(i));
+											index++;
+										}
+									}
+									if (stringVNo >= m.getLocalVariableCount())
+									{
+										while (!tempLine.startsWith("    .locals "))
+											tempLine = smaliCode.get(--insertLocation);
+										smaliCode.set(insertLocation, "    .locals " + (stringVNo+1));
+									}
 								}
 							}
 						}

@@ -307,13 +307,16 @@ public class SpecialInstrumentation {
 		int insertLocation = index - 1;
 		String tempLine = smaliCode.get(insertLocation);
 		boolean moveLabel = false;
+		ArrayList<String> labelLines = new ArrayList<String>();
 		String labelLine = smaliCode.get(insertLocation-1);
-		if (labelLine.startsWith("    :"))
+		while (labelLine.startsWith("    :"))
 		{
+			labelLines.add(labelLine);
 			moveLabel = true;
 			smaliCode.remove(insertLocation-1);
 			linesAdded--;
 			insertLocation--;
+			labelLine = smaliCode.get(insertLocation-1);
 		}
 		while (!tempLine.equals(""))
 			tempLine = smaliCode.get(--insertLocation);
@@ -328,8 +331,11 @@ public class SpecialInstrumentation {
 		
 		if (moveLabel)
 		{
-			smaliCode.add(insertLocation+1, labelLine);
-			linesAdded++;
+			for (int i = 0; i < labelLines.size(); i++)
+			{
+				smaliCode.add(insertLocation+1, labelLine);
+				linesAdded++;
+			}
 		}
 		
 		return linesAdded;
