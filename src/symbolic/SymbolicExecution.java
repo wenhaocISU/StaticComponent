@@ -8,6 +8,7 @@ import staticFamily.StaticClass;
 import staticFamily.StaticMethod;
 import staticFamily.StaticStmt;
 import analysis.Utility;
+import api.APISolver;
 
 public class SymbolicExecution {
 
@@ -161,7 +162,7 @@ public class SymbolicExecution {
 					{
 						if (subReg.isReturnedVariable) // 1
 						{
-							//TODO if return is an object, the FieldEx should also be reported
+							//if return is an object, the FieldEx should also be reported
 							Expression returnedEx = (Expression)subReg.ex.getChildAt(1);
 							symbolicContext.recentInvokeResult = returnedEx.clone();
 						}
@@ -324,6 +325,7 @@ public class SymbolicExecution {
 					symbolicContext.recentInvokeResult = tempResultEx;
 				}
 			}
+			
 			else if (s.invokesMethod() && !doAPIs)
 			{
 				/**
@@ -344,12 +346,12 @@ public class SymbolicExecution {
 				String targetClass = targetSig.substring(0, targetSig.indexOf("->"));
 				String p0Type = "";
 				Expression invokeEx = s.getExpression();
-				// find the type of p0
+				// Step 1. find the type of p0
 				if (s.getSmaliStmt().startsWith("invoke-static")
 						|| s.getSmaliStmt().startsWith("invoke-super")
 						|| s.getSmaliStmt().startsWith("invoke-direct"))
 					p0Type = "";
-				// only need to worry about invoke-virtual and invoke-interface
+				// NOTE: only need to worry about invoke-virtual and invoke-interface
 				else if (invokeEx.getChildCount() > 1)
 				{
 					Expression p0Ex = (Expression) invokeEx.getChildAt(1);
@@ -365,7 +367,7 @@ public class SymbolicExecution {
 					}
 				}
 				StaticMethod targetM = staticApp.findDynamicDispatchedMethodBody(targetSig, p0Type);
-				// It could be enum's ordinal()I method
+				// Also need to deal with enum's ordinal()I method
 				StaticClass targetC = staticApp.findClassByDexName(targetClass);
 				if (targetC != null && targetC.isEnum() && targetSig.endsWith("->ordinal()I"))
 				{
@@ -389,6 +391,7 @@ public class SymbolicExecution {
 						symbolicContext.recentInvokeResult = tempResultEx;
 					}
 				}
+				// case: target method is found in Dex
 				else if (targetM != null && !targetM.isAbstract() && !(this.blackListOn && blacklistCheck(targetM)))
 				{
 					// First, initiate the subSymbolicContext by initiating
@@ -451,26 +454,9 @@ public class SymbolicExecution {
 						}
 					}
 				}
-				else
+				else	// TODO method body not found in Dex
 				{
-					Expression tempResultEx = new Expression("$api");
-					tempResultEx.add(new Expression(s.getSmaliStmt()));
-					// Temp Invoke Expression Format:
-					// root - invoke statement
-					// children - Expression of each children in order
-					Expression invokeStmtEx = s.getExpression();
-					if (invokeStmtEx.getChildCount() > 1)
-					{
-						for (int i = 1; i < invokeStmtEx.getChildCount(); i++)
-						{
-							Expression paramEx = (Expression) invokeStmtEx.getChildAt(i);
-							Expression paramValueEx = symbolicContext.findValueOf(paramEx);
-							if (!paramEx.equals(paramValueEx))
-							{
-								tempResultEx.add(paramValueEx);
-							}
-						}
-					}
+					Expression tempResultEx = APISolver.generateResultExpression(s, symbolicContext);
 					symbolicContext.recentInvokeResult = tempResultEx;
 				}
 
@@ -1363,115 +1349,6 @@ public class SymbolicExecution {
 			symbolicContext.registers.add(localReg);
 		}
 		return symbolicContext;
-	}
-	
-	private class SymbolicContext {
-		/** registers, including local variables and parameter references */
-		ArrayList<Register> registers = new ArrayList<Register>();
-		/** the expressions that might changes global context ($Fstatic) */
-		ArrayList<Expression> outExs = new ArrayList<Expression>();
-		/** the most recent method invocation result */
-		Expression recentInvokeResult = null;
-		/** store all the array assignments of each array into one Expression */
-		ArrayList<ArrayForYices> arrays = new ArrayList<ArrayForYices>();
-		public Expression findValueOf(Expression theLeft)
-		{
-			if (theLeft.getContent().equals("$number"))
-			{
-				Expression decEx = (Expression) theLeft.getChildAt(2);
-				return decEx.clone();
-			}
-			for (Register reg : registers)
-			{
-				if (reg.regName.equals(theLeft.getContent()))
-				{
-					Expression value = (Expression) reg.ex.getChildAt(1);
-					return value.clone();
-				}
-			}
-			return theLeft;
-		}
-		public Expression findArrayExOfField(Expression fieldSig)
-		{
-			for (ArrayForYices aFY : arrays)
-			{
-				if (aFY.fieldEx.equals(fieldSig))
-				{
-					if (aFY.arrayEx != null)
-						return aFY.arrayEx.clone();
-					else return aFY.fieldEx.clone();
-				}
-			}
-			return fieldSig;
-		}
-		public void printAll()
-		{
-			for (Register reg : registers)
-			{
-				System.out.println("[" + reg.regName + "]");
-				if (reg.ex != null)
-					System.out.println("ex: " + reg.ex.toYicesStatement());
-				if (!reg.fieldExs.isEmpty())
-				{
-					System.out.println("fields: ");
-					for (Expression fieldEx : reg.fieldExs)
-						System.out.println("  " + fieldEx.toYicesStatement());
-				}
-			}
-			for (Expression outEx : outExs)
-			{
-				System.out.println("[outEx]" + outEx.toYicesStatement());
-			}
-		}
-		public Register findRegister(String name)
-		{
-			for (Register reg : registers)
-				if (reg.regName.equals(name))
-					return reg;
-			return null;
-		}
-		public void updateOutExs(Expression newOutEx)
-		{
-			Expression newLeft = (Expression) newOutEx.getChildAt(0);
-			for (Expression thisOutEx : outExs)
-			{
-				Expression thisLeft = (Expression) thisOutEx.getChildAt(0);
-				if (thisLeft.equals(newLeft))
-				{
-					Expression newRight = (Expression) newOutEx.getChildAt(1);
-					thisOutEx.remove(1);
-					thisOutEx.insert(newRight.clone(), 1);
-					return;
-				}
-			}
-			outExs.add(newOutEx.clone());
-		}
-		public void addArrayForYices(ArrayForYices aFY_to_add)
-		{
-			for (int i = 0; i < arrays.size(); i++)
-			{
-				if (arrays.get(i).name.equals(aFY_to_add.name))
-				{
-					arrays.remove(i);
-					arrays.add(aFY_to_add);
-					return;
-				}
-			}
-			arrays.add(aFY_to_add);
-		}
-	}
-	
-	private class Register {
-		String regName = "";
-		String type = "";
-		Expression ex = null;
-		ArrayForYices aFY = null;
-		ArrayList<Expression> fieldExs = new ArrayList<Expression>();
-		//boolean isFirstHalfOfWide = false;
-		//boolean isSecondHalfOfWide = false;
-		boolean isReturnedVariable = false;
-		boolean isParam = false;
-		String originalParamName = "";
 	}
 
 	

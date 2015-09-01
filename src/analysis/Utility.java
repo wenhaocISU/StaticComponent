@@ -15,7 +15,7 @@ public class Utility {
 
 	public static Object readObject(String filePath) throws Exception
 	{
-		
+		System.out.println("Loading file \"" + filePath + "\" into StaticApp object...");
 		Object obj = null;
 		File f = new File(filePath);
 		if (!f.exists())

@@ -24,57 +24,6 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 	private int maxOriginalLineNumber;
 	private int index = 1;
 	private MethodContext methodContext = new MethodContext();
-	String[] sigs = {
-/* good
-		"Lcom/google/android/gms/common/GooglePlayServicesUtil;-><clinit>()V",
-		"Lcom/google/android/gms/common/GooglePlayServicesUtil;-><init>()V",
-		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->D(Landroid/content/Context;)V",
-		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->E(Landroid/content/Context;)V",
-		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->F(Landroid/content/Context;)Ljava/lang/String;",
-		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->a(ILandroid/app/Activity;Landroid/support/v4/app/Fragment;ILandroid/content/DialogInterface$OnCancelListener;)Landroid/app/Dialog;",
-		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->a(Landroid/content/pm/PackageManager;Landroid/content/pm/PackageInfo;)Z",
-		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->a(Landroid/content/res/Resources;)Z",
-		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->a(Landroid/content/pm/PackageInfo;Z)[B",
-		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->a(Landroid/content/pm/PackageInfo;[[B)[B",
-		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->ai(I)Landroid/content/Intent;",
-		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->b(Landroid/content/pm/PackageManager;)Z",
-		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->b(Landroid/content/pm/PackageManager;Ljava/lang/String;)Z",
-		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->b(Landroid/content/res/Resources;)Z",
-		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->c(Landroid/content/Context;I)Landroid/content/Intent;",
-		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->c(Landroid/content/pm/PackageManager;)Z",
-		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->d(Landroid/content/Context;I)Ljava/lang/String;",
-		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->e(Landroid/content/Context;I)Ljava/lang/String;",
-		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->f(Landroid/content/Context;I)Ljava/lang/String;",
-   good */
-			
-	/*		
-		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->ga()Z",
-		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->getErrorDialog(ILandroid/app/Activity;I)Landroid/app/Dialog;",
-		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->getErrorDialog(ILandroid/app/Activity;ILandroid/content/DialogInterface$OnCancelListener;)Landroid/app/Dialog;",
-		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->getErrorPendingIntent(ILandroid/content/Context;I)Landroid/app/PendingIntent;",
-		
-		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->getErrorString(I)Ljava/lang/String;",
-	*/	
-		//"Lcom/google/android/gms/common/GooglePlayServicesUtil;->getOpenSourceSoftwareLicenseInfo(Landroid/content/Context;)Ljava/lang/String;",	// bad
-/*
-		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->getRemoteContext(Landroid/content/Context;)Landroid/content/Context;",
-*/		
-		
-/* good
-		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->getRemoteResource(Landroid/content/Context;)Landroid/content/res/Resources;",
-		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->isGooglePlayServicesAvailable(Landroid/content/Context;)I",
-		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->isGoogleSignedUid(Landroid/content/pm/PackageManager;I)Z",
-		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->isUserRecoverableError(I)Z",
-
-		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->showErrorDialogFragment(ILandroid/app/Activity;I)Z",
-		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->showErrorDialogFragment(ILandroid/app/Activity;ILandroid/content/DialogInterface$OnCancelListener;)Z",
-		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->showErrorDialogFragment(ILandroid/app/Activity;Landroid/support/v4/app/Fragment;ILandroid/content/DialogInterface$OnCancelListener;)Z",
-		"Lcom/google/android/gms/common/GooglePlayServicesUtil;->showErrorNotification(ILandroid/content/Context;)V",
-    good  */
-
-	};
-	List<String> sigList = Arrays.asList(sigs);
-	
 	
 	@Override
 	public StaticClass call() throws Exception {
@@ -292,7 +241,7 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 							
 						}
 
-						if (!sigList.contains(m.getSignature()) && s.getSmaliStmt().startsWith("return") &&
+						if (s.getSmaliStmt().startsWith("return") &&
 								!Blacklist.classInBlackList(c.getDexName()))
 						{
 							// Step 1. check to see if there's enough registers for instrumentation
