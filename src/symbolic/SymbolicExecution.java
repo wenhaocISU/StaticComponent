@@ -474,19 +474,20 @@ public class SymbolicExecution {
 				ArrayList<Integer> remainingValues = new ArrayList<Integer>();
 				@SuppressWarnings("unchecked")
 				Map<Integer, String> switchMap = (Map<Integer, String>) s.getData();
-				// 1 If found a past choice: follow the choice, no need for new ToDoPath
+				// Step 1. find a direction to go
+					// 1 If found a past choice: follow the choice, no need for new ToDoPath
 				if (!pastChoice.equals(""))
 				{
 					choice = pastChoice;
 				}
-				// 2 If arrived the cross road: follow the assigned new direction, no need
+					// 2 If arrived the cross road: follow the assigned new direction, no need
 				else if (toDoPath.getTargetPathStmtInfo().equals(stmtInfo))
 				{
 					choice = stmtInfo + "," + toDoPath.getNewDirection();
 					toDoPath.setTargetPathStmtInfo("");
 				}
-				// 3 If already past cross road: choose the flowthrough direction
-				// build ToDoPath for the rest of directions
+					// 3 If already past cross road: choose the flowthrough direction
+					// build ToDoPath for the rest of directions
 				else
 				{
 					choice = stmtInfo + ",FlowThrough";
@@ -501,6 +502,7 @@ public class SymbolicExecution {
 					}
 				}
 				pS.addPathChoice(choice);
+				// Step 2. update Path Constraints based on the chosen direction
 				if (choice.endsWith("FlowThrough"))
 				{
 					for (int caseValue : switchMap.keySet())
@@ -528,19 +530,20 @@ public class SymbolicExecution {
 				String stmtInfo = className + ":" + s.getSourceLineNumber();
 				String pastChoice = toDoPath.getAPastChoice();
 				String choice = "", otherChoice = "";
-				// 1 If found a past choice: follow the choice, no need for new ToDoPath
+				// Step 1. find a direction to go
+					// 1 If found a past choice: follow the choice, no need for new ToDoPath
 				if (!pastChoice.equals(""))
 				{
 					choice = pastChoice;
 				}
-				// 2 If arrived the cross road: follow the assigned new direction, no need
+					// 2 If arrived the cross road: follow the assigned new direction, no need
 				else if (toDoPath.getTargetPathStmtInfo().equals(stmtInfo))
 				{
 					choice = stmtInfo + "," + toDoPath.getNewDirection();
 					toDoPath.setTargetPathStmtInfo("");
 				}
-				// 3 If already past cross road: choose the flowthrough direction
-				// build ToDoPath for the rest of directions
+					// 3 If already past cross road: choose the flowthrough direction
+					// build ToDoPath for the rest of directions
 				else
 				{
 					/*To work around loops:
@@ -576,7 +579,7 @@ public class SymbolicExecution {
 					}
 				}
 				pS.addPathChoice(choice);
-				// update the cond expression
+				// Step 2. update Path Constraints
 				Expression cond = s.getExpression().clone();
 				Expression left = (Expression) cond.getChildAt(0);
 				Expression right = (Expression) cond.getChildAt(1);

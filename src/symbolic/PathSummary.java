@@ -2,7 +2,6 @@ package symbolic;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.List;
 
 public class PathSummary implements Serializable{
 
@@ -13,7 +12,7 @@ public class PathSummary implements Serializable{
 	private ArrayList<Expression> pathConditions;
 	private ArrayList<String> pathChoices;
 	private String methodSignature;
-		
+	
 	public PathSummary() {
 		executionLog = new ArrayList<String>();
 		symbolicStates = new ArrayList<Expression>();
