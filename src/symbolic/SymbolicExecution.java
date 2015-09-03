@@ -1261,7 +1261,8 @@ public class SymbolicExecution {
 		toDoPathList = new ArrayList<ToDoPath>();
 	}
 
-	private boolean blacklistCheck(StaticMethod m) {
+	private boolean blacklistCheck(StaticMethod m)
+	{
 		StaticClass c = staticApp.findClassByDexName(m.getDeclaringClass());
 		if (m == null || c == null)
 			return false;

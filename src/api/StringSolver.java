@@ -36,6 +36,8 @@ public class StringSolver {
 			put("Ljava/lang/String;->contains(Ljava/lang/CharSequence;)Z", "$string-contains");
 		}
 	};
+	
+	private static final String oldKeyword = "$api";
 
 
 	public static boolean isSolvableStringAPI(String invokeSig)
@@ -53,6 +55,55 @@ public class StringSolver {
 		return false;
 	}
 
+	public static void updateSymbolicStates(StaticStmt stmt, SymbolicContext symbolicContext)
+	{
+		String sig = (String) stmt.getData();
+		if (sig.equals("Ljava/lang/StringBuilder;-><init>()V"))
+		{
+			Expression p0ValueEx = new Expression("");
+			Expression p0Ex = (Expression) stmt.getExpression().getChildAt(1);
+			Register reg = symbolicContext.findRegister(p0Ex.getContent());
+			reg.ex = new Expression("=");
+			reg.ex.add(p0Ex.clone());
+			reg.ex.add(p0ValueEx.clone());
+		}
+		else if (sig.equals("Ljava/lang/StringBuilder;-><init>(Ljava/lang/String;)V"))
+		{
+			Expression p0Ex = (Expression) stmt.getExpression().getChildAt(1);
+			Expression p1Ex = (Expression) stmt.getExpression().getChildAt(2);
+			Expression p1ValueEx = symbolicContext.findValueOf(p1Ex);
+			Register reg = symbolicContext.findRegister(p0Ex.getContent());
+			reg.ex = new Expression("=");
+			reg.ex.add(p0Ex.clone());
+			reg.ex.add(p1ValueEx.clone());
+		}
+		else if (sig.startsWith("Ljava/lang/StringBuilder;->append("))
+		{
+			Expression p0Ex = (Expression) stmt.getExpression().getChildAt(1);
+			Expression p1Ex = (Expression) stmt.getExpression().getChildAt(2);
+			Expression p0ValueEx = symbolicContext.findValueOf(p0Ex);
+			Expression p1ValueEx = symbolicContext.findValueOf(p1Ex);
+			
+			if (sig.equals("Ljava/lang/StringBuilder;->append(Z)Ljava/lang/StringBuilder;"))
+			{
+				// boolean although appears as 0 or 1 in bytecode, but when appended to string, it will appear as "false" or "true"
+				if (p1ValueEx.getContent().equals("1"))
+					p1ValueEx = new Expression("\"true\"");
+				else if (p1ValueEx.getContent().equals("0"))
+					p1ValueEx = new Expression("\"false\"");
+			}
+			
+			Expression stmtEx = new Expression(oldKeyword);
+			stmtEx.add(new Expression(stmt.getSmaliStmt()));
+			stmtEx.add(p0ValueEx.clone());
+			stmtEx.add(p1ValueEx.clone());
+			Register reg = symbolicContext.findRegister(p0Ex.getContent());
+			reg.ex = new Expression("=");
+			reg.ex.add(p0Ex.clone());
+			reg.ex.add(stmtEx);
+		}
+	}
+	
 	public static Expression generateResultExpression(StaticStmt stmt, SymbolicContext symbolicContext)
 	{
 		// signatures that do not need keywords:

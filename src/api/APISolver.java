@@ -12,13 +12,7 @@ public class APISolver {
 	public static Expression generateResultExpression(StaticStmt stmt, SymbolicContext symbolicContext)
 	{
 		String invokeSig = (String) stmt.getData();
-		if (StringSolver.isSolvableStringAPI(invokeSig))
-		{
-			return StringSolver.generateResultExpression(stmt, symbolicContext);
-		}
-		
 		Expression result = new Expression(keyword);
-		Expression invokeEx = stmt.getExpression();
 		result.add(new Expression(stmt.getSmaliStmt()));
 		//if (invokeSig)
 		// Temp Invoke Expression Format:
@@ -36,6 +30,11 @@ public class APISolver {
 					result.add(paramValueEx.clone());
 				}
 			}
+		}
+		if (StringSolver.isSolvableStringAPI(invokeSig))
+		{
+			//return StringSolver.generateResultExpression(stmt, symbolicContext);
+			StringSolver.updateSymbolicStates(stmt, symbolicContext);
 		}
 		return result;
 	}

@@ -235,7 +235,6 @@ public class StaticClassBuilder implements Callable<StaticClass>{
 									while (!tempLine.startsWith("    .locals "))
 										tempLine = smaliCode.get(--insertLocation);
 									smaliCode.set(insertLocation, "    .locals 2");
-									m.setLocalVariableCount(2);
 								}
 							}
 							
