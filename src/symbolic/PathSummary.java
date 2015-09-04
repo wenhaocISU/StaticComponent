@@ -12,6 +12,7 @@ public class PathSummary implements Serializable{
 	private ArrayList<Expression> pathConditions;
 	private ArrayList<String> pathChoices;
 	private String methodSignature;
+	private boolean endsWithException;
 	
 	public PathSummary() {
 		executionLog = new ArrayList<String>();
@@ -81,6 +82,16 @@ public class PathSummary implements Serializable{
 	
 	public void setPathChoices(ArrayList<String> pathChoices) {
 		this.pathChoices = pathChoices;
+	}
+
+	public boolean endsWithException()
+	{
+		return endsWithException;
+	}
+
+	void setEndsWithException(boolean endsWithException)
+	{
+		this.endsWithException = endsWithException;
 	}
 	
 }

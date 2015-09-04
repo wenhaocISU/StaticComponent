@@ -1,6 +1,7 @@
 package symbolic;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import staticFamily.StaticApp;
@@ -59,6 +60,18 @@ public class SymbolicExecution {
 		return pathSummaries;
 	}
 	
+	public List<PathSummary> symbolicExecutionGivenExecutionLog(ArrayList<String> executionLog)
+	{
+		List<PathSummary> results = new ArrayList<PathSummary>();
+		// TODO First, split the execution log into separate method invocations
+		List<ArrayList<String>> groupedExecLogs = new ArrayList<ArrayList<String>>();
+		
+		// Then, generate ToDoPaths
+		
+		// Then use ToDoPath to generate each PathSummary
+		
+		return results;
+	}
 
 
 	private void symbolicExecution
@@ -100,6 +113,7 @@ public class SymbolicExecution {
 						if (reg.regName.equals(s.getvA()))
 							reg.isReturnedVariable = true;
 				}
+				pS.setEndsWithException(s.getSmaliStmt().startsWith("throw"));
 				break;
 			}
 /**
