@@ -60,7 +60,7 @@ public class StringSolver {
 		String sig = (String) stmt.getData();
 		if (sig.equals("Ljava/lang/StringBuilder;-><init>()V"))
 		{
-			Expression p0ValueEx = new Expression("");
+			Expression p0ValueEx = new Expression("\"\"");
 			Expression p0Ex = (Expression) stmt.getExpression().getChildAt(1);
 			Register reg = symbolicContext.findRegister(p0Ex.getContent());
 			reg.ex = new Expression("=");
