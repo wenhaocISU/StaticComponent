@@ -84,14 +84,14 @@ public class StringSolver {
 			Expression p0ValueEx = symbolicContext.findValueOf(p0Ex);
 			Expression p1ValueEx = symbolicContext.findValueOf(p1Ex);
 			
-			if (sig.equals("Ljava/lang/StringBuilder;->append(Z)Ljava/lang/StringBuilder;"))
+/*			if (sig.equals("Ljava/lang/StringBuilder;->append(Z)Ljava/lang/StringBuilder;"))
 			{
 				// boolean although appears as 0 or 1 in bytecode, but when appended to string, it will appear as "false" or "true"
 				if (p1ValueEx.getContent().equals("1"))
 					p1ValueEx = new Expression("\"true\"");
 				else if (p1ValueEx.getContent().equals("0"))
 					p1ValueEx = new Expression("\"false\"");
-			}
+			}*/
 			
 			Expression stmtEx = new Expression(oldKeyword);
 			stmtEx.add(new Expression(stmt.getSmaliStmt()));
@@ -112,7 +112,7 @@ public class StringSolver {
 		if (sig.equals("Ljava/lang/StringBuilder;-><init>()V"))
 		{
 			// do nothing, return empty Expression
-			Expression p0ValueEx = new Expression("");
+			Expression p0ValueEx = new Expression("\"\"");
 			Expression p0Ex = (Expression) stmt.getExpression().getChildAt(1);
 			Register reg = symbolicContext.findRegister(p0Ex.getContent());
 			reg.ex = new Expression("=");
