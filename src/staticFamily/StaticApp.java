@@ -150,6 +150,20 @@ public class StaticApp implements Serializable{
 	}
 	
 	/**
+	 * stmtInfo format example: "com.example.Class:174"
+	 * */
+	public StaticStmt getStaticStmt(String stmtInfo)
+	{
+		if (!stmtInfo.contains(":"))
+			return null;
+		String className = stmtInfo.split(":")[0];
+		Integer lineNumber = Integer.parseInt(stmtInfo.split(":")[1]);
+		return findClassByJavaName(className).
+				findMethodByLineNumber(lineNumber).
+				getStmtByLineNumber(lineNumber);
+	}
+	
+	/**
 	 * Needed input:
 	 * 	method signature
 	 * 	StaticApp

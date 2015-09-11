@@ -8,6 +8,7 @@ public class ToDoPath {
 	private String targetPathStmtInfo = "";
 	private String newDirection = "";
 	private int choiceCounter = 0;
+	public String entryMethodSig;
 	
 	
 	public ArrayList<String> getPathChoices() {

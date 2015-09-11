@@ -261,5 +261,15 @@ public class StaticClass implements Serializable {
 		return null;
 	}
 	
+	public StaticMethod findMethodByLineNumber(int lineNumber)
+	{
+		for (StaticMethod m : this.methods)
+		{
+			if (m.getSourceLineNumbers().contains(lineNumber))
+				return m;
+		}
+		return null;
+	}
+	
 	
 }

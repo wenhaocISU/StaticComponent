@@ -12,7 +12,7 @@ public class PathSummary implements Serializable{
 	private ArrayList<Expression> pathConditions;
 	private ArrayList<String> pathChoices;
 	private String methodSignature;
-	private boolean endsWithException;
+	private boolean endsWithException = false;
 	
 	public PathSummary() {
 		executionLog = new ArrayList<String>();

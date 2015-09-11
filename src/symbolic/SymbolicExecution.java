@@ -60,20 +60,239 @@ public class SymbolicExecution {
 		return pathSummaries;
 	}
 	
-	public List<PathSummary> symbolicExecutionGivenExecutionLog(ArrayList<String> executionLog)
+	/**
+	 * This version of doFullSymbolic() takes a list of execution log
+	 * and generate path summaries from them.
+	 * (Note): The execution log is allowed to contain logs from multiple methods
+	 * that were not executed in the same context
+	 * */
+	public List<PathSummary> doFullSymbolic(ArrayList<String> executionLog)
 	{
 		List<PathSummary> results = new ArrayList<PathSummary>();
-		// TODO First, split the execution log into separate method invocations
+//Step 1: split the execution log into separate method invocations
 		List<ArrayList<String>> groupedExecLogs = new ArrayList<ArrayList<String>>();
-		
-		// Then, generate ToDoPaths
-		
-		// Then use ToDoPath to generate each PathSummary
-		
+		ArrayList<String> currentExecLog = new ArrayList<String>();
+		ArrayList<String> callStack = new ArrayList<String>();
+		for (int i = 0; i < executionLog.size(); i++)
+		{
+			String stmtInfo = executionLog.get(i);
+			String className = stmtInfo.substring(0, stmtInfo.indexOf(":"));
+			Integer lineNumber = Integer.parseInt(stmtInfo.substring(stmtInfo.indexOf(":")+1));
+			StaticClass c = staticApp.findClassByJavaName(className);
+			if (c == null)
+			{
+				System.out.println("Can't find class body for " + className);
+				continue;
+			}
+			StaticMethod m = c.findMethodByLineNumber(lineNumber);
+			if (m == null)
+			{
+				System.out.println("Can't find method body containing: " + stmtInfo);
+				continue;
+			}
+			StaticStmt s = m.getStmtByLineNumber(lineNumber);
+			if (i == 0)
+			{
+				currentExecLog.add(stmtInfo);
+				callStack.add(m.getSignature());
+				if (s.endsMethod())
+				{
+					callStack.remove(callStack.size()-1);
+				}
+				//System.out.println("After " + stmtInfo + ", call stack is: " + callStack);
+				continue;
+			}
+			if (callStack.isEmpty())	
+			{	// call stack empty means it's a new context
+				groupedExecLogs.add(currentExecLog);
+				currentExecLog = new ArrayList<String>();
+				currentExecLog.add(stmtInfo);
+				callStack.add(m.getSignature());
+			}
+			else
+			{	// call stack not empty means it's still in the same context
+				currentExecLog.add(stmtInfo);
+				String lastStackM = callStack.get(callStack.size()-1);
+				if (!lastStackM.equals(m.getSignature()))
+					callStack.add(m.getSignature());
+			}
+			// end of iteration
+			if (s.endsMethod())
+			{
+				callStack.remove(callStack.size()-1);
+			}
+			System.out.println("After " + stmtInfo + ", call stack is: " + callStack);
+		}
+		groupedExecLogs.add(currentExecLog);
+		try
+		{
+			for (ArrayList<String> execLog : groupedExecLogs)
+			{
+				results.add(symbolicExecution(execLog));
+			}
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+		}
 		return results;
 	}
+	
+	private PathSummary symbolicExecution(ArrayList<String> executionLog) throws Exception
+	{
+		PathSummary pS = new PathSummary();
+		pS.setExecutionLog(executionLog);
+		SymbolicContext symbolicContext = new SymbolicContext();
+		ArrayList<SymbolicContext> contextStack = new ArrayList<SymbolicContext>();
+		contextStack.add(symbolicContext);
+		for (int i = 0; i < executionLog.size(); i++)
+		{
+			String stmtInfo = executionLog.get(i);
+			String className = stmtInfo.substring(0, stmtInfo.indexOf(":"));
+			Integer lineNumber = Integer.parseInt(stmtInfo.substring(stmtInfo.indexOf(":")+1));
+			StaticClass c = staticApp.findClassByJavaName(className);
+			if (c == null)
+			{
+				throw new Exception("Can't find class body for " + className);
+			}
+			StaticMethod m = c.findMethodByLineNumber(lineNumber);
+			if (m == null)
+			{
+				throw new Exception("Can't find method body containing: " + stmtInfo);
+			}
+			StaticStmt s = m.getStmtByLineNumber(lineNumber);
+			if (s.invokesMethod())
+			{
+				//TODO push a new Context in the Context stack
+			}
+			if (s.throwsException())
+			{
+				pS.setEndsWithException(true);
+				//TODO pop a Context from the Context stack, then:
+				//if stack is empty:
+				//  output useful states from SymbolicContext to PathSummary
+				//if stack is not empty:
+				//  merge useful states into 
+			}
+			else if (s.returns())
+			{
+				//TODO output useful states from SymbolicContext to PathSummary
+				//TODO output states that are related to the returned variable too
+			}
+			else if (s.ifJumps())
+			{
+				//TODO check next statement, then update path constraints accordingly
+			}
+			else if (s.switchJumps())
+			{
+				//TODO check next statement, then update path constraints accordingly
+			}
+			else if (s.gotoJumps())
+			{
+				//TODO no need to do anything, the next statement is in ExecLog already
+			}
+			else if (s.updatesSymbolicStates())
+			{
+				//TODO update states in current SymbolicStates
+			}
+		}
+		
+		return pS;
+	}
+/* Can't do it this way because there might be throw statements in the execution log
+ * and ToDoPath cannot guide the symbolic execution to end in the throw.
+//Step 2: generate ToDoPaths from each execution log
+		ArrayList<ToDoPath> toDoPaths = new ArrayList<ToDoPath>();
+		for (ArrayList<String> execLog : groupedExecLogs)
+		{
+			//ArrayList<String> trimmedLog = new ArrayList<String>();
+			ArrayList<ArrayList<String>> pathChoicesForThisExecLog
+								= new ArrayList<ArrayList<String>>();
+			for (int i = 0; i < execLog.size(); i++)
+			{
+				String stmtInfo = execLog.get(i);
+				StaticStmt s = staticApp.getStaticStmt(stmtInfo);
+				if (!s.ifJumps() && !s.switchJumps())
+					continue;
+				ArrayList<String> choices = new ArrayList<String>();
+				if (s.ifJumps())
+				{	// FlowThrough or Jump
+					String nextStmtInfo = execLog.get(i+1);
+					StaticStmt nextS = staticApp.getStaticStmt(nextStmtInfo);
+					if (nextS.getStmtID() == s.getStmtID()+1)
+						choices.add("FlowThrough");
+					else
+						choices.add("Jump");
+				}
+				else
+				{
+					String nextStmtInfo = execLog.get(i+1);
+					StaticStmt nextS = staticApp.getStaticStmt(nextStmtInfo);
+					@SuppressWarnings("unchecked")
+					Map<Integer, String> switchMap = (Map<Integer, String>) s.getData();
+					for (Map.Entry<Integer, String> entry : switchMap.entrySet())
+					{
+						if (nextS.getBlockLabel().getNormalLabels().contains(entry.getValue()))
+						{
+							choices.add(entry.getKey()+"");
+						}
+					}
+					if (nextS.getStmtID() == s.getStmtID()+1)
+						choices.add("FlowThrough");
+				}
+				pathChoicesForThisExecLog = reproducePathChoices(pathChoicesForThisExecLog, choices);
+			}
+			for (ArrayList<String> thisPathChoices : pathChoicesForThisExecLog)
+			{
+				ToDoPath tdP = new ToDoPath();
+				tdP.setPathChoices(thisPathChoices);
+				String firstStmt = execLog.get(0);
+				String className = firstStmt.substring(0, firstStmt.indexOf(":"));
+				Integer lineNumber = Integer.parseInt(firstStmt.substring(firstStmt.indexOf(":")+1));
+				StaticClass c = staticApp.findClassByJavaName(className);
+				StaticMethod m = c.findMethodByLineNumber(lineNumber);
+				tdP.entryMethodSig = m.getSignature();
+				toDoPaths.add(tdP);
+			}
+		}
+		// Then use ToDoPath to generate each PathSummary
+		for (ToDoPath tdP : toDoPaths)
+		{
+			PathSummary pS = new PathSummary();
+			pS.setMethodSignature(tdP.entryMethodSig);
+		}
 
 
+
+	
+	private ArrayList<ArrayList<String>> reproducePathChoices(ArrayList<ArrayList<String>> oldPathChoices, ArrayList<String> newPathChoices)
+	{
+		ArrayList<ArrayList<String>> results = new ArrayList<ArrayList<String>>();
+		if (oldPathChoices.isEmpty())
+		{
+			for (String newP : newPathChoices)
+			{
+				ArrayList<String> newPC = new ArrayList<String>();
+				newPC.add(newP);
+				results.add(newPC);
+			}
+		}
+		else
+		{
+			for (ArrayList<String> oldPC : oldPathChoices)
+			{
+				for (String newP : newPathChoices)
+				{
+					ArrayList<String> newPC = new ArrayList<String>(oldPC);
+					newPC.add(newP);
+					results.add(newPC);
+				}
+			}
+		}
+		return results;
+	}
+*/
+	
 	private void symbolicExecution
 				(PathSummary pS, 
 				 StaticMethod m, 
@@ -317,7 +536,8 @@ public class SymbolicExecution {
 								try
 								{
 									regValue = (Expression) reg.ex.getChildAt(1);
-								} catch (Exception e)
+								}
+								catch (Exception e)
 								{
 									regValue = new Expression("$unknown");
 								}

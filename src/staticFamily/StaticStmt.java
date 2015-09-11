@@ -176,4 +176,14 @@ public class StaticStmt implements Serializable{
 		this.data = data;
 	}
 	
+	public boolean throwsException()
+	{
+		return this.smaliStmt.startsWith("throw");
+	}
+	
+	public boolean returns()
+	{
+		return this.smaliStmt.startsWith("return");
+	}
+	
 }

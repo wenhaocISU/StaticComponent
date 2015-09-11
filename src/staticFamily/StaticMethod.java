@@ -190,10 +190,10 @@ public class StaticMethod implements Serializable {
 		return null;
 	}
 
-	public StaticStmt getStmtByLineNumber(int newHitLine)
+	public StaticStmt getStmtByLineNumber(int lineNumber)
 	{
 		for (StaticStmt s : this.smaliStmts)
-			if (s.getSourceLineNumber() == newHitLine)
+			if (s.getSourceLineNumber() == lineNumber)
 				return s;
 		return null;
 	}
